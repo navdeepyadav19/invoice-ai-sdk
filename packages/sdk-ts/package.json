@@ -1,0 +1,53 @@
+{
+  "name": "@horizonpay/invoice-ai",
+  "version": "0.1.0",
+  "description": "Official TypeScript SDK for the Invoice-AI API.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "invoice-ai",
+    "invoicing",
+    "sdk",
+    "api"
+  ],
+  "homepage": "https://invoice.horizonpay.co",
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run",
+    "test:contract": "vitest run --config vitest.contract.config.ts",
+    "gen:schema": "openapi-typescript ../../api-docs/openapi.json -o src/generated/schema.d.ts --default-non-nullable false"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "openapi-typescript": "^7.13.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5",
+    "vite": "^6.4.1",
+    "vitest": "^3.2.4"
+  }
+}
