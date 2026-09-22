@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Invoice-AI API",
-    "version": "2.0.0",
-    "description": "Stripe-shaped invoicing over HTTP: customers, products, prices, invoices and invoice items, with `cus_…`, `prod_…`, `price_…`, `in_…` and `ii_…` ids.\n\n- **Auth:** `Authorization: Bearer inv_live_…`, with per-key scopes.\n- **Envelope:** JSON bodies; responses wrap the resource in `{ \"data\": … }`; lists add `next_cursor`.\n- **Money:** integer minor units everywhere (`250000` is $2,500.00).\n- **Errors:** RFC 9457 `application/problem+json` — branch on `code`.\n- **Idempotency:** operations that spend an invoice number, email or record payment require an `Idempotency-Key`.\n- **Rate limits:** 120 requests/minute per key; sending email is limited to 10/hour. See the `RateLimit-*` headers.",
+    "version": "1.0.0",
+    "description": "Stripe-shaped invoicing over HTTP: customers, products, prices, invoices and invoice items, with `cus_…`, `prod_…`, `price_…`, `in_…` and `ii_…` ids.\n\n- **Auth:** `Authorization: Bearer inv_live_…`, with per-key scopes.\n- **Envelope:** JSON bodies; responses wrap the resource in `{ \"data\": … }`; lists add `next_cursor`.\n- **Money:** integer minor units of the currency everywhere (`250000` is $2,500.00; ¥5,000 is `5000`).\n- **Errors:** RFC 9457 `application/problem+json` — branch on `code`.\n- **Idempotency:** operations that spend an invoice number, email or record payment require an `Idempotency-Key`.\n- **Rate limits:** 120 requests/minute per key; sending email is limited to 10/hour. See the `RateLimit-*` headers.",
     "contact": {
       "name": "Invoice-AI support",
       "url": "https://invoice.horizonpay.co"
@@ -163,7 +163,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.business.retrieve()"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.business.retrieve()"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api GET /business"
+          }
+        ]
       }
     },
     "/customers": {
@@ -301,10 +318,56 @@
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
+          "422": {
+            "description": "`cursor` is not a `next_cursor` this API returned. Codes: `validation`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                },
+                "examples": {
+                  "validation": {
+                    "summary": "The cursor is not valid.",
+                    "value": {
+                      "type": "https://invoice.horizonpay.co/problems/validation",
+                      "title": "Validation failed",
+                      "status": 422,
+                      "detail": "The cursor is not valid.",
+                      "instance": "req_7f3c9a1e2b4d4e8a9c6f2d1b0a3e5f71",
+                      "code": "validation",
+                      "errors": [
+                        {
+                          "path": "cursor",
+                          "message": "Pass the `next_cursor` from the previous page, unchanged."
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nfor await (const item of invoiceai.customers.list()) {\n  console.log(item.id)\n}"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nfor item in client.customers.list():\n    print(item.id)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai customers list"
+          }
+        ]
       },
       "post": {
         "operationId": "createCustomer",
@@ -312,7 +375,7 @@
         "tags": [
           "Customers"
         ],
-        "description": "Creates a customer you can bill. Only `name` is required. Creating does not deduplicate — two calls with the same name make two customers.\n\n**Scope:** `clients:write`\n\n**Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`.",
+        "description": "Creates a customer you can bill. Only `name` is required. Creating does not deduplicate — two calls with the same name make two customers.\n\n**Scope:** `clients:write`\n\n**Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.",
         "x-required-scope": "clients:write",
         "parameters": [
           {
@@ -439,7 +502,7 @@
             }
           },
           "422": {
-            "description": "The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`.",
+            "description": "The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`, `idempotency_mismatch`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -463,15 +526,15 @@
                       ]
                     }
                   },
-                  "validation_2": {
+                  "idempotency_mismatch_2": {
                     "summary": "This Idempotency-Key was already used with a different request body.",
                     "value": {
-                      "type": "https://invoice.horizonpay.co/problems/validation",
-                      "title": "Validation failed",
+                      "type": "https://invoice.horizonpay.co/problems/idempotency-mismatch",
+                      "title": "Idempotency-Key reused",
                       "status": 422,
                       "detail": "This Idempotency-Key was already used with a different request body.",
                       "instance": "req_7f3c9a1e2b4d4e8a9c6f2d1b0a3e5f71",
-                      "code": "validation",
+                      "code": "idempotency_mismatch",
                       "errors": [
                         {
                           "path": "Idempotency-Key",
@@ -487,7 +550,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.customers.create({\n  name: 'Acme Industries',\n  tax_id: 'US-EIN 12-3456789',\n  email: 'ap@acme.example',\n  address: {\n    line1: '4th Floor, Market Tower',\n    city: 'Austin',\n    state: 'TX',\n    postal_code: '73301',\n    country: 'US',\n  },\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.customers.create(\n    name=\"Acme Industries\",\n    tax_id=\"US-EIN 12-3456789\",\n    email=\"ap@acme.example\",\n    address={\n        \"line1\": \"4th Floor, Market Tower\",\n        \"city\": \"Austin\",\n        \"state\": \"TX\",\n        \"postal_code\": \"73301\",\n        \"country\": \"US\",\n    },\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /customers \\\n  -d '{\"name\":\"Acme Industries\",\"tax_id\":\"US-EIN 12-3456789\",\"email\":\"ap@acme.example\",\"address\":{\"line1\":\"4th Floor, Market Tower\",\"city\":\"Austin\",\"state\":\"TX\",\"postal_code\":\"73301\",\"country\":\"US\"}}'"
+          }
+        ]
       }
     },
     "/customers/{id}": {
@@ -601,7 +681,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.customers.retrieve('cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.customers.retrieve(\"cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai customers get cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateCustomer",
@@ -755,7 +852,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.customers.update('cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6', {\n  phone: '+1 512 555 0100',\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.customers.update(\n    \"cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6\",\n    phone=\"+1 512 555 0100\",\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api PATCH /customers/cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6 \\\n  -d '{\"phone\":\"+1 512 555 0100\"}'"
+          }
+        ]
       },
       "delete": {
         "operationId": "deleteCustomer",
@@ -867,7 +981,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.customers.del('cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.customers.delete(\"cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai customers delete cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6"
+          }
+        ]
       }
     },
     "/products": {
@@ -997,10 +1128,56 @@
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
+          "422": {
+            "description": "`cursor` is not a `next_cursor` this API returned. Codes: `validation`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                },
+                "examples": {
+                  "validation": {
+                    "summary": "The cursor is not valid.",
+                    "value": {
+                      "type": "https://invoice.horizonpay.co/problems/validation",
+                      "title": "Validation failed",
+                      "status": 422,
+                      "detail": "The cursor is not valid.",
+                      "instance": "req_7f3c9a1e2b4d4e8a9c6f2d1b0a3e5f71",
+                      "code": "validation",
+                      "errors": [
+                        {
+                          "path": "cursor",
+                          "message": "Pass the `next_cursor` from the previous page, unchanged."
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nfor await (const item of invoiceai.products.list()) {\n  console.log(item.id)\n}"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nfor item in client.products.list():\n    print(item.id)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai products list"
+          }
+        ]
       },
       "post": {
         "operationId": "createProduct",
@@ -1008,7 +1185,7 @@
         "tags": [
           "Products"
         ],
-        "description": "Creates a product. Add one or more prices to it with `POST /prices` before billing it.\n\n**Scope:** `products:write`\n\n**Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`.",
+        "description": "Creates a product. Add one or more prices to it with `POST /prices` before billing it.\n\n**Scope:** `products:write`\n\n**Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.",
         "x-required-scope": "products:write",
         "parameters": [
           {
@@ -1119,7 +1296,7 @@
             }
           },
           "422": {
-            "description": "The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`.",
+            "description": "The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`, `idempotency_mismatch`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1143,15 +1320,15 @@
                       ]
                     }
                   },
-                  "validation_2": {
+                  "idempotency_mismatch_2": {
                     "summary": "This Idempotency-Key was already used with a different request body.",
                     "value": {
-                      "type": "https://invoice.horizonpay.co/problems/validation",
-                      "title": "Validation failed",
+                      "type": "https://invoice.horizonpay.co/problems/idempotency-mismatch",
+                      "title": "Idempotency-Key reused",
                       "status": 422,
                       "detail": "This Idempotency-Key was already used with a different request body.",
                       "instance": "req_7f3c9a1e2b4d4e8a9c6f2d1b0a3e5f71",
-                      "code": "validation",
+                      "code": "idempotency_mismatch",
                       "errors": [
                         {
                           "path": "Idempotency-Key",
@@ -1167,7 +1344,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.products.create({\n  name: 'Consulting retainer',\n  description: 'Monthly advisory block.',\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.products.create(\n    name=\"Consulting retainer\",\n    description=\"Monthly advisory block.\",\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /products \\\n  -d '{\"name\":\"Consulting retainer\",\"description\":\"Monthly advisory block.\"}'"
+          }
+        ]
       }
     },
     "/products/{id}": {
@@ -1273,7 +1467,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.products.retrieve('prod_Jc5Tn8Wq1Ze6Ra3Ym')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.products.retrieve(\"prod_Jc5Tn8Wq1Ze6Ra3Ym\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai products get prod_Jc5Tn8Wq1Ze6Ra3Ym"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateProduct",
@@ -1419,7 +1630,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.products.update('prod_Jc5Tn8Wq1Ze6Ra3Ym', {\n  description: 'Monthly advisory block, up to 10 hours.',\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.products.update(\n    \"prod_Jc5Tn8Wq1Ze6Ra3Ym\",\n    description=\"Monthly advisory block, up to 10 hours.\",\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api PATCH /products/prod_Jc5Tn8Wq1Ze6Ra3Ym \\\n  -d '{\"description\":\"Monthly advisory block, up to 10 hours.\"}'"
+          }
+        ]
       },
       "delete": {
         "operationId": "archiveProduct",
@@ -1523,7 +1751,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.products.archive('prod_Jc5Tn8Wq1Ze6Ra3Ym')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.products.archive(\"prod_Jc5Tn8Wq1Ze6Ra3Ym\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai products archive prod_Jc5Tn8Wq1Ze6Ra3Ym"
+          }
+        ]
       }
     },
     "/prices": {
@@ -1708,10 +1953,56 @@
               }
             }
           },
+          "422": {
+            "description": "`cursor` is not a `next_cursor` this API returned. Codes: `validation`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                },
+                "examples": {
+                  "validation": {
+                    "summary": "The cursor is not valid.",
+                    "value": {
+                      "type": "https://invoice.horizonpay.co/problems/validation",
+                      "title": "Validation failed",
+                      "status": 422,
+                      "detail": "The cursor is not valid.",
+                      "instance": "req_7f3c9a1e2b4d4e8a9c6f2d1b0a3e5f71",
+                      "code": "validation",
+                      "errors": [
+                        {
+                          "path": "cursor",
+                          "message": "Pass the `next_cursor` from the previous page, unchanged."
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nfor await (const item of invoiceai.prices.list()) {\n  console.log(item.id)\n}"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nfor item in client.prices.list():\n    print(item.id)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai prices list"
+          }
+        ]
       },
       "post": {
         "operationId": "createPrice",
@@ -1719,7 +2010,7 @@
         "tags": [
           "Prices"
         ],
-        "description": "Adds a price to a product. `unit_amount` is integer minor units. A `recurring` price needs `recurring.interval`; it is stored for reporting — nothing auto-bills yet.\n\n**Scope:** `products:write`\n\n**Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`.",
+        "description": "Adds a price to a product. `unit_amount` is integer minor units. A `recurring` price needs `recurring.interval`; it is stored for reporting — nothing auto-bills yet.\n\n**Scope:** `products:write`\n\n**Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.",
         "x-required-scope": "products:write",
         "parameters": [
           {
@@ -1868,7 +2159,7 @@
             }
           },
           "422": {
-            "description": "The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`.",
+            "description": "The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`, `idempotency_mismatch`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1892,15 +2183,15 @@
                       ]
                     }
                   },
-                  "validation_2": {
+                  "idempotency_mismatch_2": {
                     "summary": "This Idempotency-Key was already used with a different request body.",
                     "value": {
-                      "type": "https://invoice.horizonpay.co/problems/validation",
-                      "title": "Validation failed",
+                      "type": "https://invoice.horizonpay.co/problems/idempotency-mismatch",
+                      "title": "Idempotency-Key reused",
                       "status": 422,
                       "detail": "This Idempotency-Key was already used with a different request body.",
                       "instance": "req_7f3c9a1e2b4d4e8a9c6f2d1b0a3e5f71",
-                      "code": "validation",
+                      "code": "idempotency_mismatch",
                       "errors": [
                         {
                           "path": "Idempotency-Key",
@@ -1916,7 +2207,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.prices.create({\n  product: 'prod_Hy7Rq2Lm9Xc4Vb8Nt3Kd6Pw1',\n  nickname: 'Monthly',\n  unit_amount: 2500000,\n  currency: 'USD',\n  type: 'recurring',\n  recurring: {\n    interval: 'month',\n    interval_count: 1,\n  },\n  tax_rate: 0,\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.prices.create(\n    product=\"prod_Hy7Rq2Lm9Xc4Vb8Nt3Kd6Pw1\",\n    nickname=\"Monthly\",\n    unit_amount=2500000,\n    currency=\"USD\",\n    type=\"recurring\",\n    recurring={\n        \"interval\": \"month\",\n        \"interval_count\": 1,\n    },\n    tax_rate=0,\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /prices \\\n  -d '{\"product\":\"prod_Hy7Rq2Lm9Xc4Vb8Nt3Kd6Pw1\",\"nickname\":\"Monthly\",\"unit_amount\":2500000,\"currency\":\"USD\",\"type\":\"recurring\",\"recurring\":{\"interval\":\"month\",\"interval_count\":1},\"tax_rate\":0}'"
+          }
+        ]
       }
     },
     "/prices/{id}": {
@@ -2029,7 +2337,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.prices.retrieve('price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.prices.retrieve(\"price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai prices get price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7"
+          }
+        ]
       },
       "patch": {
         "operationId": "updatePrice",
@@ -2187,7 +2512,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.prices.update('price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7', {\n  nickname: 'Monthly (annual contract)',\n  type: 'recurring',\n  recurring: {\n    interval: 'month',\n    interval_count: 1,\n  },\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.prices.update(\n    \"price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7\",\n    nickname=\"Monthly (annual contract)\",\n    type=\"recurring\",\n    recurring={\n        \"interval\": \"month\",\n        \"interval_count\": 1,\n    },\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api PATCH /prices/price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7 \\\n  -d '{\"nickname\":\"Monthly (annual contract)\",\"type\":\"recurring\",\"recurring\":{\"interval\":\"month\",\"interval_count\":1}}'"
+          }
+        ]
       },
       "delete": {
         "operationId": "archivePrice",
@@ -2298,7 +2640,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.prices.archive('price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.prices.archive(\"price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai prices archive price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7"
+          }
+        ]
       }
     },
     "/invoices": {
@@ -2308,7 +2667,7 @@
         "tags": [
           "Invoices"
         ],
-        "description": "Returns invoices newest first, cursor-paginated, without `lines`. `status=overdue` works even though no invoice is stored as overdue — it selects open invoices past `due_date`. An unknown `customer` is a `404`.\n\n**Scope:** `invoices:read` + `clients:read` (when filtering by `customer`)",
+        "description": "Returns invoices newest first, cursor-paginated, without `lines`. `status=overdue` selects open invoices whose `due_date` is before today (UTC); `status=open` returns every open invoice, overdue ones included. An unknown `customer` is a `404`.\n\n**Scope:** `invoices:read` + `clients:read` (when filtering by `customer`)",
         "x-required-scope": "invoices:read",
         "parameters": [
           {
@@ -2503,10 +2862,56 @@
               }
             }
           },
+          "422": {
+            "description": "`cursor` is not a `next_cursor` this API returned. Codes: `validation`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                },
+                "examples": {
+                  "validation": {
+                    "summary": "The cursor is not valid.",
+                    "value": {
+                      "type": "https://invoice.horizonpay.co/problems/validation",
+                      "title": "Validation failed",
+                      "status": 422,
+                      "detail": "The cursor is not valid.",
+                      "instance": "req_7f3c9a1e2b4d4e8a9c6f2d1b0a3e5f71",
+                      "code": "validation",
+                      "errors": [
+                        {
+                          "path": "cursor",
+                          "message": "Pass the `next_cursor` from the previous page, unchanged."
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nfor await (const item of invoiceai.invoices.list()) {\n  console.log(item.id)\n}"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nfor item in client.invoices.list():\n    print(item.id)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai invoices list"
+          }
+        ]
       },
       "post": {
         "operationId": "createInvoice",
@@ -2514,7 +2919,7 @@
         "tags": [
           "Invoices"
         ],
-        "description": "Creates a `draft` for an existing customer. Each line is either a catalog `price` (description, amount and tax rate are borrowed from it) or an ad-hoc `description` + `unit_amount`. Totals are always computed server-side from the lines. The issue date is today; `currency` defaults to your business currency.\n\nA draft has no number yet — call `POST /invoices/{id}/finalize` (or `/send`) to issue it. Emits `invoice.created`.\n\n**Scope:** `invoices:write` + `business:read` + `clients:read`\n\n**Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422`.",
+        "description": "Creates a `draft` for an existing customer. Each line is either a catalog `price` (description, amount and tax rate are borrowed from it) or an ad-hoc `description` + `unit_amount`. Totals are always computed server-side from the lines. The issue date is today; `currency` defaults to your business currency.\n\nA draft has no number yet — call `POST /invoices/{id}/finalize` (or `/send`) to issue it. Emits `invoice.created`.\n\n**Scope:** `invoices:write` + `business:read` + `clients:read`\n\n**Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.",
         "x-required-scope": "invoices:write",
         "parameters": [
           {
@@ -2713,7 +3118,7 @@
             }
           },
           "422": {
-            "description": "The body failed validation (including an unknown price or a currency mismatch), or the Idempotency-Key was reused with a different body. Codes: `validation`.",
+            "description": "The body failed validation (including an unknown price or a currency mismatch), or the Idempotency-Key was reused with a different body. Codes: `validation`, `idempotency_mismatch`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2737,15 +3142,15 @@
                       ]
                     }
                   },
-                  "validation_2": {
+                  "idempotency_mismatch_2": {
                     "summary": "This Idempotency-Key was already used with a different request body.",
                     "value": {
-                      "type": "https://invoice.horizonpay.co/problems/validation",
-                      "title": "Validation failed",
+                      "type": "https://invoice.horizonpay.co/problems/idempotency-mismatch",
+                      "title": "Idempotency-Key reused",
                       "status": 422,
                       "detail": "This Idempotency-Key was already used with a different request body.",
                       "instance": "req_7f3c9a1e2b4d4e8a9c6f2d1b0a3e5f71",
-                      "code": "validation",
+                      "code": "idempotency_mismatch",
                       "errors": [
                         {
                           "path": "Idempotency-Key",
@@ -2764,7 +3169,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoices.create({\n  customer: 'cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6',\n  currency: 'USD',\n  due_date: '2026-10-22',\n  description: 'Consulting retainer.',\n  items: [\n    {\n      price: 'price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7',\n      quantity: 1,\n    },\n    {\n      description: 'Onboarding workshop',\n      quantity: 1,\n      unit: 'NOS',\n      unit_amount: 50000,\n      tax_rate: 0,\n    },\n  ],\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoices.create(\n    customer=\"cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6\",\n    currency=\"USD\",\n    due_date=\"2026-10-22\",\n    description=\"Consulting retainer.\",\n    items=[\n        {\n            \"price\": \"price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7\",\n            \"quantity\": 1,\n        },\n        {\n            \"description\": \"Onboarding workshop\",\n            \"quantity\": 1,\n            \"unit\": \"NOS\",\n            \"unit_amount\": 50000,\n            \"tax_rate\": 0,\n        },\n    ],\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /invoices \\\n  -d '{\"customer\":\"cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6\",\"currency\":\"USD\",\"due_date\":\"2026-10-22\",\"description\":\"Consulting retainer.\",\"items\":[{\"price\":\"price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7\",\"quantity\":1},{\"description\":\"Onboarding workshop\",\"quantity\":1,\"unit\":\"NOS\",\"unit_amount\":50000,\"tax_rate\":0}]}'"
+          }
+        ]
       }
     },
     "/invoices/{id}": {
@@ -2919,7 +3341,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoices.retrieve('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoices.retrieve(\"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai invoices get in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateInvoice",
@@ -2927,7 +3366,7 @@
         "tags": [
           "Invoices"
         ],
-        "description": "Drafts only. Merges the fields you send over the stored draft; `items`, when sent, replaces every line (omit it to keep them). `customer` is required. Totals are recomputed and line ids change. Once finalized an invoice is frozen — the customer may already have the PDF — and this returns `409`. Emits `invoice.updated`.\n\n**Scope:** `invoices:write` + `business:read` + `clients:read`",
+        "description": "Drafts only. A partial update: send only the fields to change — omitted ones (`customer` included) keep their stored value, and `items`, when sent, replaces every line (omit it to keep them). Totals are recomputed and line ids change. Once finalized an invoice is frozen — the customer may already have the PDF — and this returns `409`. Emits `invoice.updated`.\n\n**Scope:** `invoices:write` + `business:read` + `clients:read`",
         "x-required-scope": "invoices:write",
         "parameters": [
           {
@@ -2949,7 +3388,6 @@
           "content": {
             "application/json": {
               "example": {
-                "customer": "cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6",
                 "due_date": "2026-10-22",
                 "description": "Consulting retainer — net 30.",
                 "footer": "Thank you for your business."
@@ -3127,8 +3565,8 @@
                       "code": "validation",
                       "errors": [
                         {
-                          "path": "customer",
-                          "message": "Pick a customer"
+                          "path": "due_date",
+                          "message": "Invalid ISO date"
                         }
                       ]
                     }
@@ -3140,7 +3578,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoices.update('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3', {\n  due_date: '2026-10-22',\n  description: 'Consulting retainer — net 30.',\n  footer: 'Thank you for your business.',\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoices.update(\n    \"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\",\n    due_date=\"2026-10-22\",\n    description=\"Consulting retainer — net 30.\",\n    footer=\"Thank you for your business.\",\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api PATCH /invoices/in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3 \\\n  -d '{\"due_date\":\"2026-10-22\",\"description\":\"Consulting retainer — net 30.\",\"footer\":\"Thank you for your business.\"}'"
+          }
+        ]
       },
       "delete": {
         "operationId": "deleteInvoice",
@@ -3238,7 +3693,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nawait invoiceai.invoices.del('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nclient.invoices.delete(\"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai invoices delete in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3"
+          }
+        ]
       }
     },
     "/invoices/{id}/finalize": {
@@ -3248,7 +3720,7 @@
         "tags": [
           "Invoices"
         ],
-        "description": "Assigns the next permanent number in your series (e.g. `INV-0042`) and moves the draft to `open`. The draft must have at least one line. Finalizing an invoice that already has a number returns it unchanged with the same number — a retry can never burn a second one. Does not email the customer (see `/send`). Emits `invoice.finalized`.\n\n**Scope:** `invoices:finalize`\n\n**Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422`.",
+        "description": "Assigns the next permanent number in your series (e.g. `INV-0042`) and moves the draft to `open`. The draft must have at least one line. Finalizing an invoice that already has a number returns it unchanged with the same number — a retry can never burn a second one. Does not email the customer (see `/send`). Emits `invoice.finalized`.\n\n**Scope:** `invoices:finalize`\n\n**Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.",
         "x-required-scope": "invoices:finalize",
         "parameters": [
           {
@@ -3442,22 +3914,22 @@
             }
           },
           "422": {
-            "description": "The Idempotency-Key was reused with a different request. Codes: `validation`.",
+            "description": "The Idempotency-Key was reused with a different request. Codes: `idempotency_mismatch`.",
             "content": {
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 },
                 "examples": {
-                  "validation": {
+                  "idempotency_mismatch": {
                     "summary": "This Idempotency-Key was already used with a different request body.",
                     "value": {
-                      "type": "https://invoice.horizonpay.co/problems/validation",
-                      "title": "Validation failed",
+                      "type": "https://invoice.horizonpay.co/problems/idempotency-mismatch",
+                      "title": "Idempotency-Key reused",
                       "status": 422,
                       "detail": "This Idempotency-Key was already used with a different request body.",
                       "instance": "req_7f3c9a1e2b4d4e8a9c6f2d1b0a3e5f71",
-                      "code": "validation",
+                      "code": "idempotency_mismatch",
                       "errors": [
                         {
                           "path": "Idempotency-Key",
@@ -3476,7 +3948,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoices.finalize('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoices.finalize(\"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai invoices finalize in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3"
+          }
+        ]
       }
     },
     "/invoices/{id}/send": {
@@ -3486,7 +3975,7 @@
         "tags": [
           "Invoices"
         ],
-        "description": "Emails the invoice PDF and a link to the public invoice page, via Resend, to `to` or else the customer email recorded on the invoice. A draft is finalized first (this scope covers that — `invoices:finalize` is not needed). Open and paid invoices can be re-sent; void ones cannot.\n\n**Rate limit:** 10 sends per hour per key — each send costs money and lands in a third party’s inbox.\n\nIf the email fails after finalizing, the response is `502` and the number stays spent; retry the send. Emits `invoice.emailed` (or `invoice.email_failed`), plus `invoice.finalized` when it finalized.\n\n**Scope:** `invoices:send`\n\n**Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422`.",
+        "description": "Emails the invoice PDF and a link to the public invoice page, via Resend, to `to` or else the customer email recorded on the invoice. A draft is finalized first (this scope covers that — `invoices:finalize` is not needed). Open and paid invoices can be re-sent; void ones cannot.\n\n**Rate limit:** 10 sends per hour per key — each send costs money and lands in a third party’s inbox.\n\nIf the email fails after finalizing, the response is `502` and the number stays spent; retry the send. Emits `invoice.emailed` (or `invoice.email_failed`), plus `invoice.finalized` when it finalized.\n\n**Scope:** `invoices:send`\n\n**Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.",
         "x-required-scope": "invoices:send",
         "parameters": [
           {
@@ -3532,7 +4021,7 @@
         },
         "responses": {
           "200": {
-            "description": "Sent.",
+            "description": "Sent. The invoice (finalized if it was a draft, with lines) plus the address it went to.",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/RequestId"
@@ -3555,55 +4044,83 @@
                 "example": {
                   "data": {
                     "id": "in_Pb2Xk7Mv4Qs9Lr1Wd6Tn3Fh8",
-                    "invoice_number": "INV-0042",
-                    "emailed": true,
-                    "public_url": "https://invoice.horizonpay.co/i/2b7e4c1a-9f3d-4e68-8a5b-0d1c7f3e9a46"
-                  }
+                    "object": "invoice",
+                    "number": "INV-0042",
+                    "status": "open",
+                    "customer": "cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6",
+                    "currency": "USD",
+                    "collection_method": "send_invoice",
+                    "issue_date": "2026-09-22",
+                    "due_date": "2026-10-22",
+                    "description": "Consulting retainer.",
+                    "footer": null,
+                    "subtotal": 2550000,
+                    "discount": 0,
+                    "taxable": 2550000,
+                    "tax": 0,
+                    "total": 2550000,
+                    "amount_due": 2550000,
+                    "amount_in_words": "Twenty Five Thousand Five Hundred USD Only",
+                    "public_url_token": "2b7e4c1a-9f3d-4e68-8a5b-0d1c7f3e9a46",
+                    "finalized_at": "2026-09-22T10:00:00.000Z",
+                    "paid_at": null,
+                    "voided_at": null,
+                    "void_reason": null,
+                    "created": "2026-09-22T09:30:00.000Z",
+                    "updated": "2026-09-22T10:00:00.000Z",
+                    "lines": {
+                      "data": [
+                        {
+                          "id": "ii_Da4Vq9Ns2Kx7Bm3Yt8Rc1Lp6",
+                          "object": "invoiceitem",
+                          "price": "price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7",
+                          "product": "prod_Hy7Rq2Lm9Xc4Vb8Nt3Kd6Pw1",
+                          "description": "Consulting retainer",
+                          "quantity": 1,
+                          "unit": "NOS",
+                          "unit_amount": 2500000,
+                          "amount": 2500000,
+                          "discount_percent": 0,
+                          "tax_rate": 0,
+                          "tax_amount": 0
+                        },
+                        {
+                          "id": "ii_Ew8Hz3Jc6Tq1Ms5Nv9Kb2Xr4",
+                          "object": "invoiceitem",
+                          "price": null,
+                          "product": null,
+                          "description": "Onboarding workshop",
+                          "quantity": 1,
+                          "unit": "NOS",
+                          "unit_amount": 50000,
+                          "amount": 50000,
+                          "discount_percent": 0,
+                          "tax_rate": 0,
+                          "tax_amount": 0
+                        }
+                      ]
+                    }
+                  },
+                  "emailed_to": "ap@acme.example"
                 },
                 "schema": {
                   "type": "object",
                   "properties": {
                     "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "description": "The invoice, `in_…`.",
-                          "examples": [
-                            "in_Pb2Xk7Mv4Qs9Lr1Wd6Tn3Fh8"
-                          ]
-                        },
-                        "invoice_number": {
-                          "type": "string",
-                          "description": "The invoice number (assigned now if it was a draft).",
-                          "examples": [
-                            "INV-0042"
-                          ]
-                        },
-                        "emailed": {
-                          "type": "boolean",
-                          "description": "Always `true` on success."
-                        },
-                        "public_url": {
-                          "type": "string",
-                          "description": "The public invoice page included in the email.",
-                          "examples": [
-                            "https://invoice.horizonpay.co/i/2b7e4c1a-9f3d-4e68-8a5b-0d1c7f3e9a46"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "invoice_number",
-                        "emailed",
-                        "public_url"
-                      ],
-                      "additionalProperties": false,
-                      "description": "The send result."
+                      "description": "The invoice, finalized if it was a draft, with lines.",
+                      "$ref": "#/components/schemas/Invoice"
+                    },
+                    "emailed_to": {
+                      "type": "string",
+                      "description": "The address the email was sent to: `to`, or the customer email.",
+                      "examples": [
+                        "ap@acme.example"
+                      ]
                     }
                   },
                   "required": [
-                    "data"
+                    "data",
+                    "emailed_to"
                   ],
                   "additionalProperties": false
                 }
@@ -3685,7 +4202,7 @@
             }
           },
           "422": {
-            "description": "No recipient: neither `to` nor a customer email. Or the Idempotency-Key was reused with a different body. Codes: `validation`.",
+            "description": "No recipient: neither `to` nor a customer email. Or the Idempotency-Key was reused with a different body. Codes: `validation`, `idempotency_mismatch`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3709,15 +4226,15 @@
                       ]
                     }
                   },
-                  "validation_2": {
+                  "idempotency_mismatch_2": {
                     "summary": "This Idempotency-Key was already used with a different request body.",
                     "value": {
-                      "type": "https://invoice.horizonpay.co/problems/validation",
-                      "title": "Validation failed",
+                      "type": "https://invoice.horizonpay.co/problems/idempotency-mismatch",
+                      "title": "Idempotency-Key reused",
                       "status": 422,
                       "detail": "This Idempotency-Key was already used with a different request body.",
                       "instance": "req_7f3c9a1e2b4d4e8a9c6f2d1b0a3e5f71",
-                      "code": "validation",
+                      "code": "idempotency_mismatch",
                       "errors": [
                         {
                           "path": "Idempotency-Key",
@@ -3787,7 +4304,24 @@
               }
             }
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoices.send('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3', {\n  to: 'ap@acme.example',\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoices.send(\n    \"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\",\n    to=\"ap@acme.example\",\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /invoices/in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3/send \\\n  -d '{\"to\":\"ap@acme.example\"}'"
+          }
+        ]
       }
     },
     "/invoices/{id}/pay": {
@@ -3797,7 +4331,7 @@
         "tags": [
           "Invoices"
         ],
-        "description": "Records that an `open` (or overdue) invoice was paid outside Invoice-AI — no money moves. Drafts, void and already-paid invoices return `409`. Sets `paid_at` and `amount_due: 0`. The response omits `lines`. Emits `invoice.paid`, with `reference` in the event meta.\n\n**Scope:** `payments:write`\n\n**Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422`.",
+        "description": "Records that an `open` (or overdue) invoice was paid outside Invoice-AI — no money moves. Drafts, void and already-paid invoices return `409`. Sets `paid_at` and `amount_due: 0`. The response omits `lines`. Emits `invoice.paid`, with `reference` in the event meta.\n\n**Scope:** `payments:write`\n\n**Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.",
         "x-required-scope": "payments:write",
         "parameters": [
           {
@@ -3973,22 +4507,22 @@
             }
           },
           "422": {
-            "description": "The body is not valid JSON, or the Idempotency-Key was reused with a different body. Codes: `validation`.",
+            "description": "The body is not valid JSON, or the Idempotency-Key was reused with a different body. Codes: `idempotency_mismatch`.",
             "content": {
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 },
                 "examples": {
-                  "validation": {
+                  "idempotency_mismatch": {
                     "summary": "This Idempotency-Key was already used with a different request body.",
                     "value": {
-                      "type": "https://invoice.horizonpay.co/problems/validation",
-                      "title": "Validation failed",
+                      "type": "https://invoice.horizonpay.co/problems/idempotency-mismatch",
+                      "title": "Idempotency-Key reused",
                       "status": 422,
                       "detail": "This Idempotency-Key was already used with a different request body.",
                       "instance": "req_7f3c9a1e2b4d4e8a9c6f2d1b0a3e5f71",
-                      "code": "validation",
+                      "code": "idempotency_mismatch",
                       "errors": [
                         {
                           "path": "Idempotency-Key",
@@ -4007,7 +4541,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoices.pay('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3', {\n  paid_on: '2026-09-29',\n  reference: 'chk_123456',\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoices.pay(\n    \"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\",\n    paid_on=\"2026-09-29\",\n    reference=\"chk_123456\",\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /invoices/in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3/pay \\\n  -d '{\"paid_on\":\"2026-09-29\",\"reference\":\"chk_123456\"}'"
+          }
+        ]
       }
     },
     "/invoices/{id}/void": {
@@ -4017,7 +4568,7 @@
         "tags": [
           "Invoices"
         ],
-        "description": "Voids an `open` (or overdue) invoice with a reason. The number stays on the record — an auditor seeing 0041 then 0043 needs to find 0042 voided, not missing. A paid invoice cannot be voided (it needs a credit note); a draft should be deleted instead. The response omits `lines`. Emits `invoice.voided`.\n\n**Scope:** `invoices:finalize`\n\n**Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422`.",
+        "description": "Voids an `open` (or overdue) invoice with a reason. The number stays on the record — an auditor seeing 0041 then 0043 needs to find 0042 voided, not missing. A paid invoice cannot be voided (it needs a credit note); a draft should be deleted instead. The response omits `lines`. Emits `invoice.voided`.\n\n**Scope:** `invoices:finalize`\n\n**Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.",
         "x-required-scope": "invoices:finalize",
         "parameters": [
           {
@@ -4192,7 +4743,7 @@
             }
           },
           "422": {
-            "description": "`reason` is missing or blank, or the Idempotency-Key was reused with a different body. Codes: `validation`.",
+            "description": "`reason` is missing or blank, or the Idempotency-Key was reused with a different body. Codes: `validation`, `idempotency_mismatch`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4216,15 +4767,15 @@
                       ]
                     }
                   },
-                  "validation_2": {
+                  "idempotency_mismatch_2": {
                     "summary": "This Idempotency-Key was already used with a different request body.",
                     "value": {
-                      "type": "https://invoice.horizonpay.co/problems/validation",
-                      "title": "Validation failed",
+                      "type": "https://invoice.horizonpay.co/problems/idempotency-mismatch",
+                      "title": "Idempotency-Key reused",
                       "status": 422,
                       "detail": "This Idempotency-Key was already used with a different request body.",
                       "instance": "req_7f3c9a1e2b4d4e8a9c6f2d1b0a3e5f71",
-                      "code": "validation",
+                      "code": "idempotency_mismatch",
                       "errors": [
                         {
                           "path": "Idempotency-Key",
@@ -4243,7 +4794,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoices.void('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3', {\n  reason: 'Raised against the wrong customer.',\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoices.void(\n    \"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\",\n    reason=\"Raised against the wrong customer.\",\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /invoices/in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3/void \\\n  -d '{\"reason\":\"Raised against the wrong customer.\"}'"
+          }
+        ]
       }
     },
     "/invoices/{id}/pdf": {
@@ -4350,7 +4918,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst pdf = await invoiceai.invoices.pdf('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\npdf = client.invoices.pdf(\"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai invoices pdf in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3"
+          }
+        ]
       }
     },
     "/invoices/{id}/events": {
@@ -4360,7 +4945,7 @@
         "tags": [
           "Invoices"
         ],
-        "description": "Returns the full history of one invoice, newest first (not paginated): created, updated, finalized, emailed, viewed, downloaded, paid, voided. `invoice.viewed` and `invoice.downloaded` are recorded when the customer opens the public link — the way to tell they actually looked at it.\n\n**Scope:** `invoices:read`",
+        "description": "Returns the history of one invoice, newest first, cursor-paginated: created, updated, finalized, emailed, viewed, downloaded, paid, voided. `invoice.viewed` and `invoice.downloaded` are recorded when the customer opens the public link — the way to tell they actually looked at it.\n\n**Scope:** `invoices:read`",
         "x-required-scope": "invoices:read",
         "parameters": [
           {
@@ -4375,11 +4960,32 @@
             },
             "required": true,
             "description": "The invoice, `in_…` or UUID."
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "description": "The `next_cursor` from the previous page. Opaque — do not build it yourself.",
+              "type": "string"
+            },
+            "description": "The `next_cursor` from the previous page. Opaque — do not build it yourself."
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 25,
+              "description": "Page size, 1–100. Defaults to 25.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "description": "Page size, 1–100. Defaults to 25."
           }
         ],
         "responses": {
           "200": {
-            "description": "Events, newest first.",
+            "description": "A page of events, newest first.",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/RequestId"
@@ -4443,7 +5049,8 @@
                       },
                       "created_at": "2026-09-22T09:30:00.000Z"
                     }
-                  ]
+                  ],
+                  "next_cursor": null
                 },
                 "schema": {
                   "type": "object",
@@ -4454,10 +5061,25 @@
                         "$ref": "#/components/schemas/InvoiceEvent"
                       },
                       "description": "Events, newest first."
+                    },
+                    "next_cursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Pass as `cursor` to fetch the next page. `null` on the last page.",
+                      "examples": [
+                        "MjAyNi0wOS0yMlQwOTozMDowMC4wMDBafDdmM2M"
+                      ]
                     }
                   },
                   "required": [
-                    "data"
+                    "data",
+                    "next_cursor"
                   ],
                   "additionalProperties": false
                 }
@@ -4493,10 +5115,56 @@
               }
             }
           },
+          "422": {
+            "description": "`cursor` is not a `next_cursor` this API returned. Codes: `validation`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                },
+                "examples": {
+                  "validation": {
+                    "summary": "The cursor is not valid.",
+                    "value": {
+                      "type": "https://invoice.horizonpay.co/problems/validation",
+                      "title": "Validation failed",
+                      "status": 422,
+                      "detail": "The cursor is not valid.",
+                      "instance": "req_7f3c9a1e2b4d4e8a9c6f2d1b0a3e5f71",
+                      "code": "validation",
+                      "errors": [
+                        {
+                          "path": "cursor",
+                          "message": "Pass the `next_cursor` from the previous page, unchanged."
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nfor await (const item of invoiceai.invoices.events('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3')) {\n  console.log(item.id)\n}"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nfor item in client.invoices.events(\"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\"):\n    print(item.id)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai invoices events in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3"
+          }
+        ]
       }
     },
     "/invoice-items": {
@@ -4654,7 +5322,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nfor await (const item of invoiceai.invoiceItems.list()) {\n  console.log(item.id)\n}"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nfor item in client.invoice_items.list():\n    print(item.id)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api GET /invoice-items"
+          }
+        ]
       },
       "post": {
         "operationId": "createInvoiceItem",
@@ -4662,7 +5347,7 @@
         "tags": [
           "Invoice items"
         ],
-        "description": "Appends one line to a draft: either a `price`, or `description` + `unit_amount`. Totals are recomputed, so the response is the whole invoice; every line gets a new id. Finalized invoices return `409`. Emits `invoice.updated`.\n\n**Scope:** `invoices:write` + `business:read`\n\n**Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422`.",
+        "description": "Appends one line to a draft: either a `price`, or `description` + `unit_amount`. Totals are recomputed, so the response is the whole invoice; every line gets a new id. Finalized invoices return `409`. Emits `invoice.updated`.\n\n**Scope:** `invoices:write` + `business:read`\n\n**Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.",
         "x-required-scope": "invoices:write",
         "parameters": [
           {
@@ -4873,7 +5558,7 @@
             }
           },
           "422": {
-            "description": "The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`.",
+            "description": "The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`, `idempotency_mismatch`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4897,15 +5582,15 @@
                       ]
                     }
                   },
-                  "validation_2": {
+                  "idempotency_mismatch_2": {
                     "summary": "This Idempotency-Key was already used with a different request body.",
                     "value": {
-                      "type": "https://invoice.horizonpay.co/problems/validation",
-                      "title": "Validation failed",
+                      "type": "https://invoice.horizonpay.co/problems/idempotency-mismatch",
+                      "title": "Idempotency-Key reused",
                       "status": 422,
                       "detail": "This Idempotency-Key was already used with a different request body.",
                       "instance": "req_7f3c9a1e2b4d4e8a9c6f2d1b0a3e5f71",
-                      "code": "validation",
+                      "code": "idempotency_mismatch",
                       "errors": [
                         {
                           "path": "Idempotency-Key",
@@ -4924,7 +5609,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoiceItems.create({\n  invoice: 'in_Pb2Xk7Mv4Qs9Lr1Wd6Tn3Fh8',\n  description: 'Extra review round',\n  quantity: 1,\n  unit_amount: 10000,\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoice_items.create(\n    invoice=\"in_Pb2Xk7Mv4Qs9Lr1Wd6Tn3Fh8\",\n    description=\"Extra review round\",\n    quantity=1,\n    unit_amount=10000,\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /invoice-items \\\n  -d '{\"invoice\":\"in_Pb2Xk7Mv4Qs9Lr1Wd6Tn3Fh8\",\"description\":\"Extra review round\",\"quantity\":1,\"unit_amount\":10000}'"
+          }
+        ]
       }
     },
     "/invoice-items/{id}": {
@@ -5034,7 +5736,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoiceItems.retrieve('ii_Qa6Ze2Rt8Yp4Uk1Mh7Bn3Xs9')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoice_items.retrieve(\"ii_Qa6Ze2Rt8Yp4Uk1Mh7Bn3Xs9\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api GET /invoice-items/ii_Qa6Ze2Rt8Yp4Uk1Mh7Bn3Xs9"
+          }
+        ]
       },
       "delete": {
         "operationId": "deleteInvoiceItem",
@@ -5233,7 +5952,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoiceItems.del('ii_Qa6Ze2Rt8Yp4Uk1Mh7Bn3Xs9')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoice_items.delete(\"ii_Qa6Ze2Rt8Yp4Uk1Mh7Bn3Xs9\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api DELETE /invoice-items/ii_Qa6Ze2Rt8Yp4Uk1Mh7Bn3Xs9"
+          }
+        ]
       }
     },
     "/webhook-endpoints": {
@@ -5243,11 +5979,34 @@
         "tags": [
           "Webhook endpoints"
         ],
-        "description": "Returns all your webhook endpoints, newest first (not paginated). Signing secrets are never included — only once, at creation.\n\n**Scope:** `webhooks:manage`",
+        "description": "Returns your webhook endpoints, newest first, cursor-paginated. Signing secrets are never included — only once, at creation.\n\n**Scope:** `webhooks:manage`",
         "x-required-scope": "webhooks:manage",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "description": "The `next_cursor` from the previous page. Opaque — do not build it yourself.",
+              "type": "string"
+            },
+            "description": "The `next_cursor` from the previous page. Opaque — do not build it yourself."
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 25,
+              "description": "Page size, 1–100. Defaults to 25.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "description": "Page size, 1–100. Defaults to 25."
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Your endpoints.",
+            "description": "A page of endpoints.",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/RequestId"
@@ -5278,7 +6037,8 @@
                       "failure_count": 0,
                       "created_at": "2026-09-22T09:30:00.000Z"
                     }
-                  ]
+                  ],
+                  "next_cursor": null
                 },
                 "schema": {
                   "type": "object",
@@ -5288,11 +6048,26 @@
                       "items": {
                         "$ref": "#/components/schemas/WebhookEndpoint"
                       },
-                      "description": "Endpoints, newest first."
+                      "description": "Webhook endpoints, newest first."
+                    },
+                    "next_cursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Pass as `cursor` to fetch the next page. `null` on the last page.",
+                      "examples": [
+                        "MjAyNi0wOS0yMlQwOTozMDowMC4wMDBafDdmM2M"
+                      ]
                     }
                   },
                   "required": [
-                    "data"
+                    "data",
+                    "next_cursor"
                   ],
                   "additionalProperties": false
                 }
@@ -5305,10 +6080,56 @@
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
+          "422": {
+            "description": "`cursor` is not a `next_cursor` this API returned. Codes: `validation`.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                },
+                "examples": {
+                  "validation": {
+                    "summary": "The cursor is not valid.",
+                    "value": {
+                      "type": "https://invoice.horizonpay.co/problems/validation",
+                      "title": "Validation failed",
+                      "status": 422,
+                      "detail": "The cursor is not valid.",
+                      "instance": "req_7f3c9a1e2b4d4e8a9c6f2d1b0a3e5f71",
+                      "code": "validation",
+                      "errors": [
+                        {
+                          "path": "cursor",
+                          "message": "Pass the `next_cursor` from the previous page, unchanged."
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nfor await (const item of invoiceai.webhookEndpoints.list()) {\n  console.log(item.id)\n}"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nfor item in client.webhook_endpoints.list():\n    print(item.id)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai webhooks list"
+          }
+        ]
       },
       "post": {
         "operationId": "createWebhookEndpoint",
@@ -5316,7 +6137,7 @@
         "tags": [
           "Webhook endpoints"
         ],
-        "description": "Registers an https URL to receive events. The response carries the signing `secret` (`whsec_…`) — the only time it is returned, so store it. The URL must use https and must not resolve to a private, loopback or link-local address.\n\n**Scope:** `webhooks:manage`\n\n**Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`.",
+        "description": "Registers an https URL to receive events. The response carries the signing `secret` (`whsec_` + base64) — the only time it is returned, so store it. The URL must use https and must not resolve to a private, loopback or link-local address.\n\n**Scope:** `webhooks:manage`\n\n**Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.",
         "x-required-scope": "webhooks:manage",
         "parameters": [
           {
@@ -5457,7 +6278,7 @@
                         },
                         "secret": {
                           "type": "string",
-                          "description": "Signing secret for verifying `webhook-signature`. Returned only in this response.",
+                          "description": "Signing secret for verifying `webhook-signature`: `whsec_` followed by standard base64 (Standard Webhooks). Returned only in this response.",
                           "examples": [
                             "whsec_Zm9vYmFyYmF6cXV4cXV1eGNvcmdl"
                           ]
@@ -5563,7 +6384,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.webhookEndpoints.create({\n  url: 'https://example.com/webhooks/invoice-ai',\n  events: [\n    'invoice.finalized',\n    'invoice.paid',\n  ],\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.webhook_endpoints.create(\n    url=\"https://example.com/webhooks/invoice-ai\",\n    events=[\n        \"invoice.finalized\",\n        \"invoice.paid\",\n    ],\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /webhook-endpoints \\\n  -d '{\"url\":\"https://example.com/webhooks/invoice-ai\",\"events\":[\"invoice.finalized\",\"invoice.paid\"]}'"
+          }
+        ]
       }
     },
     "/webhook-endpoints/{id}": {
@@ -5640,7 +6478,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nawait invoiceai.webhookEndpoints.del('5b1e9f4e-2c3a-4d7b-9a61-0f2e8c4d7a13')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nclient.webhook_endpoints.delete(\"5b1e9f4e-2c3a-4d7b-9a61-0f2e8c4d7a13\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai webhooks delete 5b1e9f4e-2c3a-4d7b-9a61-0f2e8c4d7a13"
+          }
+        ]
       }
     }
   },
@@ -6217,7 +7072,7 @@
             ]
           },
           "unit_amount": {
-            "description": "Price per unit in integer minor units. Required unless `price` is given.",
+            "description": "Price per unit in integer minor units of the invoice currency. Required unless `price` is given.",
             "examples": [
               50000
             ],
@@ -6251,12 +7106,12 @@
         "type": "object",
         "properties": {
           "customer": {
-            "type": "string",
-            "minLength": 1,
-            "description": "The customer to bill, `cus_…` or UUID. Required on update as well — resend the current customer to keep it.",
+            "description": "Bill a different customer, `cus_…` or UUID. Omit to keep the current one.",
             "examples": [
               "cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6"
-            ]
+            ],
+            "type": "string",
+            "minLength": 1
           },
           "currency": {
             "description": "ISO 4217 code. Defaults to your business currency.",
@@ -6322,10 +7177,7 @@
             }
           }
         },
-        "required": [
-          "customer"
-        ],
-        "description": "Fields other than `customer` are optional; omitted ones keep their stored value."
+        "description": "Any subset of fields. Omitted fields keep their stored value; omit `items` to keep the lines."
       },
       "InvoiceSend": {
         "type": "object",
@@ -6426,7 +7278,7 @@
             ]
           },
           "unit_amount": {
-            "description": "Price per unit in integer minor units. Required unless `price` is given.",
+            "description": "Price per unit in integer minor units of the invoice currency. Required unless `price` is given.",
             "examples": [
               50000
             ],
@@ -6845,7 +7697,7 @@
           },
           "code": {
             "type": "string",
-            "description": "Stable machine-readable code. Branch on this, never on `detail`. One of: `validation`, `unauthorized`, `forbidden`, `not_found`, `invalid_state`, `conflict`, `idempotency_key_required`, `rate_limited`, `upstream_failed`, `internal_error`.",
+            "description": "Stable machine-readable code. Branch on this, never on `detail`. One of: `validation`, `idempotency_mismatch`, `unauthorized`, `forbidden`, `not_found`, `invalid_state`, `conflict`, `idempotency_key_required`, `rate_limited`, `upstream_failed`, `internal_error`.",
             "examples": [
               "invalid_state"
             ]
@@ -7195,7 +8047,7 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "Price per unit. Integer minor units (`250000` is $2,500.00).",
+            "description": "Price per unit. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).",
             "examples": [
               2500000
             ]
@@ -7422,7 +8274,7 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "Sum of quantity × unit_amount over all lines, before discount and tax. Integer minor units (`250000` is $2,500.00).",
+            "description": "Sum of quantity × unit_amount over all lines, before discount and tax. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).",
             "examples": [
               2550000
             ]
@@ -7431,7 +8283,7 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "Total discount across lines. Integer minor units (`250000` is $2,500.00).",
+            "description": "Total discount across lines. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).",
             "examples": [
               0
             ]
@@ -7440,7 +8292,7 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "`subtotal` − `discount`. Integer minor units (`250000` is $2,500.00).",
+            "description": "`subtotal` − `discount`. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).",
             "examples": [
               2550000
             ]
@@ -7449,7 +8301,7 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "Total tax across lines. Integer minor units (`250000` is $2,500.00).",
+            "description": "Total tax across lines. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).",
             "examples": [
               0
             ]
@@ -7458,7 +8310,7 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "`taxable` + `tax`. Integer minor units (`250000` is $2,500.00).",
+            "description": "`taxable` + `tax`. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).",
             "examples": [
               2550000
             ]
@@ -7467,7 +8319,7 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "What is still owed: `total` while `open` or `overdue`, otherwise 0. Integer minor units (`250000` is $2,500.00).",
+            "description": "What is still owed: `total` while `open` or `overdue`, otherwise 0. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).",
             "examples": [
               2550000
             ]
@@ -7666,7 +8518,7 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "Price per unit. Integer minor units (`250000` is $2,500.00).",
+            "description": "Price per unit. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).",
             "examples": [
               2500000
             ]
@@ -7675,7 +8527,7 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "Line total after discount, including tax. Integer minor units (`250000` is $2,500.00).",
+            "description": "Line total after discount, including tax. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).",
             "examples": [
               2500000
             ]
@@ -7698,7 +8550,7 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "Tax on this line. Integer minor units (`250000` is $2,500.00).",
+            "description": "Tax on this line. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).",
             "examples": [
               0
             ]

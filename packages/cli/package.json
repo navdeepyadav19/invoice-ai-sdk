@@ -1,0 +1,47 @@
+{
+  "name": "@horizonpay/invoice-ai-cli",
+  "version": "0.1.0",
+  "description": "The Invoice-AI command line: log in with your browser, then manage customers, products, prices, invoices and webhooks from your terminal.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "invoice-ai": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "invoice-ai",
+    "invoicing",
+    "cli"
+  ],
+  "homepage": "https://invoice.horizonpay.co",
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "docs": "node scripts/gen-docs.mjs"
+  },
+  "dependencies": {
+    "@horizonpay/invoice-ai": "workspace:*",
+    "@napi-rs/keyring": "^2.1.0",
+    "open": "^10.2.0"
+  },
+  "devDependencies": {
+    "@clack/prompts": "^0.11.0",
+    "@types/node": "^20",
+    "cli-table3": "^0.6.5",
+    "commander": "^13.1.0",
+    "execa": "^9.6.1",
+    "picocolors": "^1.1.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5",
+    "vite": "^6.4.1",
+    "vitest": "^3.2.4"
+  }
+}
