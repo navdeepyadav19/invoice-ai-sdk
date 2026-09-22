@@ -1,0 +1,702 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`--help > invoice-ai --help 1`] = `
+"Usage: invoice-ai [options] [command]
+
+Invoice-AI from your terminal. Log in once, then manage customers, products,
+prices, invoices and webhooks.
+
+Options:
+  -v, --version                  print the CLI version
+  --api-key <key>                API key to use (overrides INVOICE_AI_API_KEY
+                                 and the saved profile)
+  -p, --profile <name>           saved profile to use (see \`invoice-ai switch\`)
+  --json                         print raw JSON (default when output is piped)
+  --format <format>              output format (choices: "table", "json", "csv")
+  -y, --yes                      skip confirmation prompts
+  --debug                        log each API request and retry (secrets
+                                 redacted)
+  --no-color                     disable colors (also honours NO_COLOR)
+  -h, --help                     show help
+
+Commands:
+  login [options]                Log in with your browser (or store a key passed
+                                 with --api-key)
+  logout                         Revoke this profile’s key on the server and
+                                 forget it locally
+  whoami                         Show the account, key and profile in use
+  switch [profile]               Make another logged-in profile the default
+                                 (lists profiles without an argument)
+  customers                      Manage customers (the people and companies you
+                                 bill)
+  products                       Manage products in your catalog
+  prices                         Manage prices (what a product costs, per
+                                 currency)
+  invoices                       Create, send and manage invoices
+  webhooks                       Manage webhook endpoints and test your receiver
+  api [options] <method> <path>  Call any API endpoint directly and print the
+                                 JSON response
+  open [page] [id]               Open the web app: dashboard, invoices,
+                                 customers, products, settings, api-keys,
+                                 webhooks, or "invoice <id>"
+  docs [topic]                   Open the documentation (home, quickstart, auth,
+                                 errors, idempotency, pagination, rate-limits,
+                                 ids, lifecycle, webhooks, api, cli, changelog)
+  completion <shell>             Print a shell completion script (bash, zsh or
+                                 fish)
+
+Examples:
+  $ invoice-ai login
+  $ invoice-ai invoices create
+  $ invoice-ai invoices list --status open
+  $ invoice-ai customers create --name "Acme" --email ap@acme.com
+  $ invoice-ai api GET /business
+
+Environment:
+  INVOICE_AI_API_KEY      API key (for CI); beats the saved profile
+  INVOICE_AI_PROFILE      profile to use when --profile isn't given
+  INVOICE_AI_BASE_URL     API base URL, e.g. http://localhost:3000/api/v1
+  INVOICE_AI_NO_KEYCHAIN  keep keys in the config file, not the OS keychain
+  NO_COLOR                disable colors
+
+Exit codes: 0 ok · 1 API error · 2 usage error · 3 auth · 4 rate limited
+"
+`;
+
+exports[`--help > invoice-ai api --help 1`] = `
+"Usage: invoice-ai api [options] <method> <path>
+
+Call any API endpoint directly and print the JSON response
+
+Options:
+  -d, --data <json>        request body as JSON, @file.json or @- for stdin
+  -q, --query <key=value>  query parameter (repeatable)
+  --idempotency-key <key>  Idempotency-Key for POST (default: generated)
+  -h, --help               show help
+
+Global Options:
+  -v, --version            print the CLI version
+  --api-key <key>          API key to use (overrides INVOICE_AI_API_KEY and the
+                           saved profile)
+  -p, --profile <name>     saved profile to use (see \`invoice-ai switch\`)
+  --json                   print raw JSON (default when output is piped)
+  --format <format>        output format (choices: "table", "json", "csv")
+  -y, --yes                skip confirmation prompts
+  --debug                  log each API request and retry (secrets redacted)
+  --no-color               disable colors (also honours NO_COLOR)
+
+The path is relative to /api/v1 (a leading /api/v1 is accepted too).
+
+Examples:
+  $ invoice-ai api GET /business
+  $ invoice-ai api GET /invoices --query status=open --query limit=5
+  $ invoice-ai api POST /customers --data '{"name":"Acme","email":"ap@acme.com"}'
+  $ invoice-ai api PATCH /customers/cus_123 --data @patch.json
+"
+`;
+
+exports[`--help > invoice-ai completion --help 1`] = `
+"Usage: invoice-ai completion [options] <shell>
+
+Print a shell completion script (bash, zsh or fish)
+
+Options:
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+
+Install:
+  bash  $ invoice-ai completion bash > ~/.local/share/bash-completion/completions/invoice-ai
+  zsh   $ invoice-ai completion zsh > "\${fpath[1]}/_invoice-ai"
+  fish  $ invoice-ai completion fish > ~/.config/fish/completions/invoice-ai.fish
+"
+`;
+
+exports[`--help > invoice-ai customers --help 1`] = `
+"Usage: invoice-ai customers [options] [command]
+
+Manage customers (the people and companies you bill)
+
+Options:
+  -h, --help             show help
+
+Global Options:
+  -v, --version          print the CLI version
+  --api-key <key>        API key to use (overrides INVOICE_AI_API_KEY and the
+                         saved profile)
+  -p, --profile <name>   saved profile to use (see \`invoice-ai switch\`)
+  --json                 print raw JSON (default when output is piped)
+  --format <format>      output format (choices: "table", "json", "csv")
+  -y, --yes              skip confirmation prompts
+  --debug                log each API request and retry (secrets redacted)
+  --no-color             disable colors (also honours NO_COLOR)
+
+Commands:
+  list [options]         List customers, newest first
+  get <id>               Show one customer
+  create [options]       Create a customer
+  update [options] <id>  Update a customer (only the fields you pass change)
+  archive|delete <id>    Archive a customer (issued invoices keep referencing
+                         it)
+"
+`;
+
+exports[`--help > invoice-ai customers create --help 1`] = `
+"Usage: invoice-ai customers create [options]
+
+Create a customer
+
+Options:
+  --name <name>         customer name
+  --email <email>       billing email (invoices are sent here)
+  --phone <phone>       phone number
+  --tax-id <id>         tax id, e.g. a GSTIN or VAT number
+  -d, --data <json>     request body as JSON, @file.json or @- for stdin (flags
+                        override its fields)
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+"
+`;
+
+exports[`--help > invoice-ai customers list --help 1`] = `
+"Usage: invoice-ai customers list [options]
+
+List customers, newest first
+
+Options:
+  -q, --query <text>    search name and email
+  --include-deleted     include archived customers
+  --limit <n>           results per page (1-100)
+  --cursor <cursor>     start after this cursor (from a previous page)
+  --all                 fetch every page, not just the first
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+"
+`;
+
+exports[`--help > invoice-ai docs --help 1`] = `
+"Usage: invoice-ai docs [options] [topic]
+
+Open the documentation (home, quickstart, auth, errors, idempotency, pagination,
+rate-limits, ids, lifecycle, webhooks, api, cli, changelog)
+
+Options:
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+"
+`;
+
+exports[`--help > invoice-ai invoices --help 1`] = `
+"Usage: invoice-ai invoices [options] [command]
+
+Create, send and manage invoices
+
+Options:
+  -h, --help             show help
+
+Global Options:
+  -v, --version          print the CLI version
+  --api-key <key>        API key to use (overrides INVOICE_AI_API_KEY and the
+                         saved profile)
+  -p, --profile <name>   saved profile to use (see \`invoice-ai switch\`)
+  --json                 print raw JSON (default when output is piped)
+  --format <format>      output format (choices: "table", "json", "csv")
+  -y, --yes              skip confirmation prompts
+  --debug                log each API request and retry (secrets redacted)
+  --no-color             disable colors (also honours NO_COLOR)
+
+Commands:
+  list [options]         List invoices, newest first
+  get <id>               Show one invoice with its totals
+  create [options]       Create an invoice: a guided wizard with no flags, or
+                         scripted with flags
+  update [options] <id>  Update a draft invoice (only the fields you pass
+                         change)
+  delete <id>            Delete a draft invoice (finalized invoices can only be
+                         voided)
+  finalize <id>          Finalize a draft: assigns the number and locks the
+                         lines
+  send [options] <id>    Email the invoice to the customer (finalizes a draft
+                         first)
+  pay [options] <id>     Record a payment received outside Invoice-AI (marks it
+                         paid)
+  void [options] <id>    Void a finalized invoice (it stays on record, marked
+                         void)
+  pdf [options] <id>     Download the invoice PDF
+  events [options] <id>  Show an invoice's history (created, emailed, viewed,
+                         paid…)
+"
+`;
+
+exports[`--help > invoice-ai invoices create --help 1`] = `
+"Usage: invoice-ai invoices create [options]
+
+Create an invoice: a guided wizard with no flags, or scripted with flags
+
+Options:
+  --finalize                    finalize it right away (assigns a number, locks
+                                the lines)
+  --send                        finalize and email it to the customer
+  --no-interactive              never start the wizard
+  --customer <id>               customer to bill (cus_…)
+  --price <id>                  add a line from this price (repeatable)
+  --qty <n>                     quantity for the --price in the same position
+                                (repeatable, default 1)
+  --currency <code>             invoice currency (defaults to your business
+                                currency)
+  --due-date <YYYY-MM-DD>       due date
+  --days-until-due <n>          due this many days after finalizing
+  --description <text>          memo shown on the invoice
+  --footer <text>               footer text
+  --collection-method <method>  send_invoice (default) or charge_automatically
+  -d, --data <json>             request body as JSON, @file.json or @- for stdin
+                                (flags override its fields)
+  -h, --help                    show help
+
+Global Options:
+  -v, --version                 print the CLI version
+  --api-key <key>               API key to use (overrides INVOICE_AI_API_KEY and
+                                the saved profile)
+  -p, --profile <name>          saved profile to use (see \`invoice-ai switch\`)
+  --json                        print raw JSON (default when output is piped)
+  --format <format>             output format (choices: "table", "json", "csv")
+  -y, --yes                     skip confirmation prompts
+  --debug                       log each API request and retry (secrets
+                                redacted)
+  --no-color                    disable colors (also honours NO_COLOR)
+
+Examples:
+  $ invoice-ai invoices create                      # guided wizard
+  $ invoice-ai invoices create --customer cus_123 --price price_abc --qty 2 --send
+"
+`;
+
+exports[`--help > invoice-ai invoices list --help 1`] = `
+"Usage: invoice-ai invoices list [options]
+
+List invoices, newest first
+
+Options:
+  --status <status>     only this status: draft, open, paid, overdue, void
+  --customer <id>       only invoices billed to this customer
+  --from <YYYY-MM-DD>   issued on or after this date
+  --to <YYYY-MM-DD>     issued on or before this date
+  --limit <n>           results per page (1-100)
+  --cursor <cursor>     start after this cursor (from a previous page)
+  --all                 fetch every page, not just the first
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+"
+`;
+
+exports[`--help > invoice-ai invoices pdf --help 1`] = `
+"Usage: invoice-ai invoices pdf [options] <id>
+
+Download the invoice PDF
+
+Options:
+  -o, --out <file>      where to save it (default: <id>.pdf; "-" writes to
+                        stdout)
+  --open                open the PDF once saved
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+"
+`;
+
+exports[`--help > invoice-ai invoices send --help 1`] = `
+"Usage: invoice-ai invoices send [options] <id>
+
+Email the invoice to the customer (finalizes a draft first)
+
+Options:
+  --to <email>          send to this address instead of the customer's email
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+"
+`;
+
+exports[`--help > invoice-ai invoices void --help 1`] = `
+"Usage: invoice-ai invoices void [options] <id>
+
+Void a finalized invoice (it stays on record, marked void)
+
+Options:
+  --reason <text>       why it is being voided (kept on the invoice)
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+"
+`;
+
+exports[`--help > invoice-ai login --help 1`] = `
+"Usage: invoice-ai login [options]
+
+Log in with your browser (or store a key passed with --api-key)
+
+Options:
+  --no-browser          print the login URL instead of opening a browser
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+
+Opens the Invoice-AI authorize page, where you approve this device. A new API key
+is created for it and saved in your OS keychain (or ~/.config/invoice-ai/config.json,
+mode 0600, when no keychain is available).
+
+Examples:
+  $ invoice-ai login
+  $ invoice-ai login --profile staging
+  $ invoice-ai login --api-key inv_live_…        # no browser; verifies and stores the key
+"
+`;
+
+exports[`--help > invoice-ai logout --help 1`] = `
+"Usage: invoice-ai logout [options]
+
+Revoke this profile’s key on the server and forget it locally
+
+Options:
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+"
+`;
+
+exports[`--help > invoice-ai open --help 1`] = `
+"Usage: invoice-ai open [options] [page] [id]
+
+Open the web app: dashboard, invoices, customers, products, settings, api-keys,
+webhooks, or "invoice <id>"
+
+Options:
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+
+Examples:
+  $ invoice-ai open
+  $ invoice-ai open invoice in_123     # the invoice's public page
+"
+`;
+
+exports[`--help > invoice-ai prices --help 1`] = `
+"Usage: invoice-ai prices [options] [command]
+
+Manage prices (what a product costs, per currency)
+
+Options:
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+
+Commands:
+  list [options]        List prices
+  get <id>              Show one price
+  create [options]      Create a price for a product
+  archive <id>          Archive a price (it can no longer be added to invoices)
+"
+`;
+
+exports[`--help > invoice-ai prices create --help 1`] = `
+"Usage: invoice-ai prices create [options]
+
+Create a price for a product
+
+Options:
+  --product <id>         the product this price belongs to
+  --amount <decimal>     amount in major units, e.g. 25.00 (converted using the
+                         currency)
+  --unit-amount <minor>  amount in minor units, e.g. 2500 for $25.00
+  --currency <code>      ISO 4217 code, e.g. USD
+  --nickname <text>      label shown in the dashboard
+  --interval <interval>  makes it recurring: day, week, month or year
+  --interval-count <n>   intervals between bills (default 1)
+  --tax-rate <percent>   default tax percentage for lines billed from this price
+  -d, --data <json>      request body as JSON, @file.json or @- for stdin (flags
+                         override its fields)
+  -h, --help             show help
+
+Global Options:
+  -v, --version          print the CLI version
+  --api-key <key>        API key to use (overrides INVOICE_AI_API_KEY and the
+                         saved profile)
+  -p, --profile <name>   saved profile to use (see \`invoice-ai switch\`)
+  --json                 print raw JSON (default when output is piped)
+  --format <format>      output format (choices: "table", "json", "csv")
+  -y, --yes              skip confirmation prompts
+  --debug                log each API request and retry (secrets redacted)
+  --no-color             disable colors (also honours NO_COLOR)
+
+Example:
+  $ invoice-ai prices create --product prod_123 --amount 25.00 --currency USD
+"
+`;
+
+exports[`--help > invoice-ai products --help 1`] = `
+"Usage: invoice-ai products [options] [command]
+
+Manage products in your catalog
+
+Options:
+  -h, --help             show help
+
+Global Options:
+  -v, --version          print the CLI version
+  --api-key <key>        API key to use (overrides INVOICE_AI_API_KEY and the
+                         saved profile)
+  -p, --profile <name>   saved profile to use (see \`invoice-ai switch\`)
+  --json                 print raw JSON (default when output is piped)
+  --format <format>      output format (choices: "table", "json", "csv")
+  -y, --yes              skip confirmation prompts
+  --debug                log each API request and retry (secrets redacted)
+  --no-color             disable colors (also honours NO_COLOR)
+
+Commands:
+  list [options]         List products
+  get <id>               Show one product
+  create [options]       Create a product (then add a price with \`prices
+                         create\`)
+  update [options] <id>  Update a product (only the fields you pass change)
+  archive <id>           Archive a product (existing invoices are unaffected)
+"
+`;
+
+exports[`--help > invoice-ai products create --help 1`] = `
+"Usage: invoice-ai products create [options]
+
+Create a product (then add a price with \`prices create\`)
+
+Options:
+  --name <name>         product name, shown on invoice lines
+  --description <text>  longer description
+  --active <bool>       whether it can be added to new invoices (true/false)
+  -d, --data <json>     request body as JSON, @file.json or @- for stdin (flags
+                        override its fields)
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+"
+`;
+
+exports[`--help > invoice-ai switch --help 1`] = `
+"Usage: invoice-ai switch [options] [profile]
+
+Make another logged-in profile the default (lists profiles without an argument)
+
+Options:
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+"
+`;
+
+exports[`--help > invoice-ai webhooks --help 1`] = `
+"Usage: invoice-ai webhooks [options] [command]
+
+Manage webhook endpoints and test your receiver
+
+Options:
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+
+Commands:
+  list [options]        List webhook endpoints
+  create [options]      Register an https endpoint (prints the signing secret
+                        once)
+  delete <id>           Delete a webhook endpoint (deliveries stop immediately)
+  test [options] <url>  Send a correctly signed sample event to your receiver
+                        (no API key needed)
+"
+`;
+
+exports[`--help > invoice-ai webhooks test --help 1`] = `
+"Usage: invoice-ai webhooks test [options] <url>
+
+Send a correctly signed sample event to your receiver (no API key needed)
+
+Options:
+  --secret <whsec>      the endpoint's signing secret (whsec_…)
+  --event <type>        event type to send (default: "invoice.paid")
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+
+Signs the body exactly like a real delivery (Standard Webhooks: webhook-id,
+webhook-timestamp, webhook-signature), so your verification code runs for real.
+
+Example:
+  $ invoice-ai webhooks test http://localhost:3000/webhooks --secret whsec_…
+"
+`;
+
+exports[`--help > invoice-ai whoami --help 1`] = `
+"Usage: invoice-ai whoami [options]
+
+Show the account, key and profile in use
+
+Options:
+  -h, --help            show help
+
+Global Options:
+  -v, --version         print the CLI version
+  --api-key <key>       API key to use (overrides INVOICE_AI_API_KEY and the
+                        saved profile)
+  -p, --profile <name>  saved profile to use (see \`invoice-ai switch\`)
+  --json                print raw JSON (default when output is piped)
+  --format <format>     output format (choices: "table", "json", "csv")
+  -y, --yes             skip confirmation prompts
+  --debug               log each API request and retry (secrets redacted)
+  --no-color            disable colors (also honours NO_COLOR)
+"
+`;
