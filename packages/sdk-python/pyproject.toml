@@ -1,0 +1,81 @@
+[project]
+name = "horizonpay-invoice-ai"
+version = "0.1.0"
+description = "Official Python SDK for the Invoice-AI API."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [{ name = "HorizonPay" }]
+keywords = ["invoice-ai", "invoicing", "sdk", "api"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Typing :: Typed",
+]
+dependencies = [
+  "httpx>=0.25,<1",
+  "pydantic>=2,<3",
+  "typing-extensions>=4.7",
+]
+
+[project.urls]
+Homepage = "https://invoice.horizonpay.co"
+Documentation = "https://invoice.horizonpay.co/docs"
+
+[dependency-groups]
+dev = [
+  "pytest>=8",
+  "pytest-asyncio>=0.23",
+  "respx>=0.21",
+  "ruff>=0.6",
+  "mypy>=1.10",
+  # Generates invoice_ai/types/_generated.py (run through `pnpm sdk:gen`).
+  "datamodel-code-generator==0.34.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["invoice_ai"]
+
+[tool.hatch.build.targets.sdist]
+include = ["invoice_ai", "README.md", "pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+# Contract tests start a Prism mock server; run them with `uv run pytest -m contract`.
+addopts = "-m 'not contract'"
+markers = ["contract: every SDK method against a Prism mock of api-docs/openapi.json"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+extend-exclude = ["invoice_ai/types/_generated.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+ignore = [
+  "UP006", "UP007", "UP035", "UP045", # keep typing.List/Optional: the package supports Python 3.9
+  "RUF001", "RUF002", "RUF003",       # docstrings use typographic characters on purpose
+]
+
+[tool.ruff.lint.per-file-ignores]
+"invoice_ai/resources/*.py" = ["E501"]
+"invoice_ai/types/params.py" = ["E501"]
+"invoice_ai/_operations.py" = ["E501"]
+"tests/**" = ["E501", "B017"]
+
+[tool.mypy]
+strict = true
+packages = ["invoice_ai"]
+plugins = ["pydantic.mypy"]
