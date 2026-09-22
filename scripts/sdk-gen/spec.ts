@@ -1,6 +1,6 @@
 /**
  * Reads api-docs/openapi.json into a language-neutral list of SDK operations.
- * Shared by every SDK generator (TypeScript today, Python next), so all SDKs
+ * Shared by every SDK generator (ts.ts, python.ts), so all SDKs
  * agree on resource names, method names and response shapes.
  *
  * Naming rules (Stripe-style):
@@ -14,11 +14,13 @@
  */
 import { readFileSync } from 'node:fs'
 
-type Json = Record<string, unknown>
+export type Json = Record<string, unknown>
 
 export interface SpecParam {
   name: string
   required: boolean
+  /** The parameter's JSON Schema (may be a $ref). Used by generators that type each param. */
+  schema: unknown
 }
 
 export type ResponseKind =
@@ -45,6 +47,8 @@ export interface SpecOperation {
   queryParams: SpecParam[]
   hasBody: boolean
   bodyRequired: boolean
+  /** The JSON request body's schema (usually a $ref to components.schemas), if any. */
+  bodySchema: unknown
   successStatus: number
   kind: ResponseKind
   /** Schema name of `data` (data) or of each item (page), when it's a $ref. */
@@ -68,6 +72,8 @@ export interface SpecResource {
 }
 
 export interface Spec {
+  /** The parsed openapi.json, for generators that need schemas the summary doesn't carry. */
+  raw: Json
   title: string
   version: string
   schemaNames: string[]
@@ -119,7 +125,7 @@ export function methodName(operationId: string, resource: SpecResource): string 
   )
 }
 
-function deref(spec: Json, node: unknown): Json {
+export function deref(spec: Json, node: unknown): Json {
   let n = node as Json
   for (let i = 0; i < 10 && n && typeof n.$ref === 'string'; i++) {
     const parts = (n.$ref as string).replace(/^#\//, '').split('/')
@@ -128,7 +134,7 @@ function deref(spec: Json, node: unknown): Json {
   return n
 }
 
-function refName(node: unknown): string | undefined {
+export function refName(node: unknown): string | undefined {
   const ref = (node as Json | undefined)?.$ref
   return typeof ref === 'string' ? ref.split('/').pop() : undefined
 }
@@ -194,8 +200,9 @@ export function loadSpec(file: string): Spec {
         pathParams: params.filter((p) => p.in === 'path').map((p) => String(p.name)),
         queryParams: params
           .filter((p) => p.in === 'query')
-          .map((p) => ({ name: String(p.name), required: p.required === true })),
+          .map((p) => ({ name: String(p.name), required: p.required === true, schema: p.schema })),
         hasBody: Boolean((requestBody?.content as Json | undefined)?.['application/json']),
+        bodySchema: ((requestBody?.content as Json | undefined)?.['application/json'] as Json | undefined)?.schema,
         bodyRequired: requestBody?.required === true,
         ...classify(spec, op),
         resource,
@@ -205,6 +212,7 @@ export function loadSpec(file: string): Spec {
   }
 
   return {
+    raw: spec,
     title: String(info.title),
     version: String(info.version),
     schemaNames: Object.keys(((spec.components as Json | undefined)?.schemas ?? {}) as Json),
