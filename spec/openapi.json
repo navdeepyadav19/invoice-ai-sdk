@@ -163,7 +163,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.business.retrieve()"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.business.retrieve()"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api GET /business"
+          }
+        ]
       }
     },
     "/customers": {
@@ -333,7 +350,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nfor await (const item of invoiceai.customers.list()) {\n  console.log(item.id)\n}"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nfor item in client.customers.list():\n    print(item.id)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai customers list"
+          }
+        ]
       },
       "post": {
         "operationId": "createCustomer",
@@ -516,7 +550,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.customers.create({\n  name: 'Acme Industries',\n  tax_id: 'US-EIN 12-3456789',\n  email: 'ap@acme.example',\n  address: {\n    line1: '4th Floor, Market Tower',\n    city: 'Austin',\n    state: 'TX',\n    postal_code: '73301',\n    country: 'US',\n  },\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.customers.create(\n    name=\"Acme Industries\",\n    tax_id=\"US-EIN 12-3456789\",\n    email=\"ap@acme.example\",\n    address={\n        \"line1\": \"4th Floor, Market Tower\",\n        \"city\": \"Austin\",\n        \"state\": \"TX\",\n        \"postal_code\": \"73301\",\n        \"country\": \"US\",\n    },\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /customers \\\n  -d '{\"name\":\"Acme Industries\",\"tax_id\":\"US-EIN 12-3456789\",\"email\":\"ap@acme.example\",\"address\":{\"line1\":\"4th Floor, Market Tower\",\"city\":\"Austin\",\"state\":\"TX\",\"postal_code\":\"73301\",\"country\":\"US\"}}'"
+          }
+        ]
       }
     },
     "/customers/{id}": {
@@ -630,7 +681,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.customers.retrieve('cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.customers.retrieve(\"cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai customers get cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateCustomer",
@@ -784,7 +852,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.customers.update('cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6', {\n  phone: '+1 512 555 0100',\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.customers.update(\n    \"cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6\",\n    phone=\"+1 512 555 0100\",\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api PATCH /customers/cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6 \\\n  -d '{\"phone\":\"+1 512 555 0100\"}'"
+          }
+        ]
       },
       "delete": {
         "operationId": "deleteCustomer",
@@ -896,7 +981,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.customers.del('cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.customers.delete(\"cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai customers delete cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6"
+          }
+        ]
       }
     },
     "/products": {
@@ -1058,7 +1160,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nfor await (const item of invoiceai.products.list()) {\n  console.log(item.id)\n}"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nfor item in client.products.list():\n    print(item.id)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai products list"
+          }
+        ]
       },
       "post": {
         "operationId": "createProduct",
@@ -1225,7 +1344,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.products.create({\n  name: 'Consulting retainer',\n  description: 'Monthly advisory block.',\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.products.create(\n    name=\"Consulting retainer\",\n    description=\"Monthly advisory block.\",\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /products \\\n  -d '{\"name\":\"Consulting retainer\",\"description\":\"Monthly advisory block.\"}'"
+          }
+        ]
       }
     },
     "/products/{id}": {
@@ -1331,7 +1467,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.products.retrieve('prod_Jc5Tn8Wq1Ze6Ra3Ym')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.products.retrieve(\"prod_Jc5Tn8Wq1Ze6Ra3Ym\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai products get prod_Jc5Tn8Wq1Ze6Ra3Ym"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateProduct",
@@ -1477,7 +1630,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.products.update('prod_Jc5Tn8Wq1Ze6Ra3Ym', {\n  description: 'Monthly advisory block, up to 10 hours.',\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.products.update(\n    \"prod_Jc5Tn8Wq1Ze6Ra3Ym\",\n    description=\"Monthly advisory block, up to 10 hours.\",\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api PATCH /products/prod_Jc5Tn8Wq1Ze6Ra3Ym \\\n  -d '{\"description\":\"Monthly advisory block, up to 10 hours.\"}'"
+          }
+        ]
       },
       "delete": {
         "operationId": "archiveProduct",
@@ -1581,7 +1751,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.products.archive('prod_Jc5Tn8Wq1Ze6Ra3Ym')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.products.archive(\"prod_Jc5Tn8Wq1Ze6Ra3Ym\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai products archive prod_Jc5Tn8Wq1Ze6Ra3Ym"
+          }
+        ]
       }
     },
     "/prices": {
@@ -1798,7 +1985,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nfor await (const item of invoiceai.prices.list()) {\n  console.log(item.id)\n}"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nfor item in client.prices.list():\n    print(item.id)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai prices list"
+          }
+        ]
       },
       "post": {
         "operationId": "createPrice",
@@ -2003,7 +2207,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.prices.create({\n  product: 'prod_Hy7Rq2Lm9Xc4Vb8Nt3Kd6Pw1',\n  nickname: 'Monthly',\n  unit_amount: 2500000,\n  currency: 'USD',\n  type: 'recurring',\n  recurring: {\n    interval: 'month',\n    interval_count: 1,\n  },\n  tax_rate: 0,\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.prices.create(\n    product=\"prod_Hy7Rq2Lm9Xc4Vb8Nt3Kd6Pw1\",\n    nickname=\"Monthly\",\n    unit_amount=2500000,\n    currency=\"USD\",\n    type=\"recurring\",\n    recurring={\n        \"interval\": \"month\",\n        \"interval_count\": 1,\n    },\n    tax_rate=0,\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /prices \\\n  -d '{\"product\":\"prod_Hy7Rq2Lm9Xc4Vb8Nt3Kd6Pw1\",\"nickname\":\"Monthly\",\"unit_amount\":2500000,\"currency\":\"USD\",\"type\":\"recurring\",\"recurring\":{\"interval\":\"month\",\"interval_count\":1},\"tax_rate\":0}'"
+          }
+        ]
       }
     },
     "/prices/{id}": {
@@ -2116,7 +2337,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.prices.retrieve('price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.prices.retrieve(\"price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai prices get price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7"
+          }
+        ]
       },
       "patch": {
         "operationId": "updatePrice",
@@ -2274,7 +2512,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.prices.update('price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7', {\n  nickname: 'Monthly (annual contract)',\n  type: 'recurring',\n  recurring: {\n    interval: 'month',\n    interval_count: 1,\n  },\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.prices.update(\n    \"price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7\",\n    nickname=\"Monthly (annual contract)\",\n    type=\"recurring\",\n    recurring={\n        \"interval\": \"month\",\n        \"interval_count\": 1,\n    },\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api PATCH /prices/price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7 \\\n  -d '{\"nickname\":\"Monthly (annual contract)\",\"type\":\"recurring\",\"recurring\":{\"interval\":\"month\",\"interval_count\":1}}'"
+          }
+        ]
       },
       "delete": {
         "operationId": "archivePrice",
@@ -2385,7 +2640,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.prices.archive('price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.prices.archive(\"price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai prices archive price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7"
+          }
+        ]
       }
     },
     "/invoices": {
@@ -2622,7 +2894,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nfor await (const item of invoiceai.invoices.list()) {\n  console.log(item.id)\n}"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nfor item in client.invoices.list():\n    print(item.id)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai invoices list"
+          }
+        ]
       },
       "post": {
         "operationId": "createInvoice",
@@ -2880,7 +3169,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoices.create({\n  customer: 'cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6',\n  currency: 'USD',\n  due_date: '2026-10-22',\n  description: 'Consulting retainer.',\n  items: [\n    {\n      price: 'price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7',\n      quantity: 1,\n    },\n    {\n      description: 'Onboarding workshop',\n      quantity: 1,\n      unit: 'NOS',\n      unit_amount: 50000,\n      tax_rate: 0,\n    },\n  ],\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoices.create(\n    customer=\"cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6\",\n    currency=\"USD\",\n    due_date=\"2026-10-22\",\n    description=\"Consulting retainer.\",\n    items=[\n        {\n            \"price\": \"price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7\",\n            \"quantity\": 1,\n        },\n        {\n            \"description\": \"Onboarding workshop\",\n            \"quantity\": 1,\n            \"unit\": \"NOS\",\n            \"unit_amount\": 50000,\n            \"tax_rate\": 0,\n        },\n    ],\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /invoices \\\n  -d '{\"customer\":\"cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6\",\"currency\":\"USD\",\"due_date\":\"2026-10-22\",\"description\":\"Consulting retainer.\",\"items\":[{\"price\":\"price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7\",\"quantity\":1},{\"description\":\"Onboarding workshop\",\"quantity\":1,\"unit\":\"NOS\",\"unit_amount\":50000,\"tax_rate\":0}]}'"
+          }
+        ]
       }
     },
     "/invoices/{id}": {
@@ -3035,7 +3341,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoices.retrieve('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoices.retrieve(\"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai invoices get in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateInvoice",
@@ -3255,7 +3578,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoices.update('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3', {\n  due_date: '2026-10-22',\n  description: 'Consulting retainer — net 30.',\n  footer: 'Thank you for your business.',\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoices.update(\n    \"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\",\n    due_date=\"2026-10-22\",\n    description=\"Consulting retainer — net 30.\",\n    footer=\"Thank you for your business.\",\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api PATCH /invoices/in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3 \\\n  -d '{\"due_date\":\"2026-10-22\",\"description\":\"Consulting retainer — net 30.\",\"footer\":\"Thank you for your business.\"}'"
+          }
+        ]
       },
       "delete": {
         "operationId": "deleteInvoice",
@@ -3353,7 +3693,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nawait invoiceai.invoices.del('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nclient.invoices.delete(\"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai invoices delete in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3"
+          }
+        ]
       }
     },
     "/invoices/{id}/finalize": {
@@ -3591,7 +3948,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoices.finalize('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoices.finalize(\"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai invoices finalize in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3"
+          }
+        ]
       }
     },
     "/invoices/{id}/send": {
@@ -3930,7 +4304,24 @@
               }
             }
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoices.send('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3', {\n  to: 'ap@acme.example',\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoices.send(\n    \"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\",\n    to=\"ap@acme.example\",\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /invoices/in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3/send \\\n  -d '{\"to\":\"ap@acme.example\"}'"
+          }
+        ]
       }
     },
     "/invoices/{id}/pay": {
@@ -4150,7 +4541,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoices.pay('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3', {\n  paid_on: '2026-09-29',\n  reference: 'chk_123456',\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoices.pay(\n    \"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\",\n    paid_on=\"2026-09-29\",\n    reference=\"chk_123456\",\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /invoices/in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3/pay \\\n  -d '{\"paid_on\":\"2026-09-29\",\"reference\":\"chk_123456\"}'"
+          }
+        ]
       }
     },
     "/invoices/{id}/void": {
@@ -4386,7 +4794,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoices.void('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3', {\n  reason: 'Raised against the wrong customer.',\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoices.void(\n    \"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\",\n    reason=\"Raised against the wrong customer.\",\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /invoices/in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3/void \\\n  -d '{\"reason\":\"Raised against the wrong customer.\"}'"
+          }
+        ]
       }
     },
     "/invoices/{id}/pdf": {
@@ -4493,7 +4918,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst pdf = await invoiceai.invoices.pdf('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\npdf = client.invoices.pdf(\"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai invoices pdf in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3"
+          }
+        ]
       }
     },
     "/invoices/{id}/events": {
@@ -4705,7 +5147,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nfor await (const item of invoiceai.invoices.events('in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3')) {\n  console.log(item.id)\n}"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nfor item in client.invoices.events(\"in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3\"):\n    print(item.id)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai invoices events in_Mx4Hb7Pz2Kq9Tr5Wn1Lc8Vd3"
+          }
+        ]
       }
     },
     "/invoice-items": {
@@ -4863,7 +5322,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nfor await (const item of invoiceai.invoiceItems.list()) {\n  console.log(item.id)\n}"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nfor item in client.invoice_items.list():\n    print(item.id)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api GET /invoice-items"
+          }
+        ]
       },
       "post": {
         "operationId": "createInvoiceItem",
@@ -5133,7 +5609,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoiceItems.create({\n  invoice: 'in_Pb2Xk7Mv4Qs9Lr1Wd6Tn3Fh8',\n  description: 'Extra review round',\n  quantity: 1,\n  unit_amount: 10000,\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoice_items.create(\n    invoice=\"in_Pb2Xk7Mv4Qs9Lr1Wd6Tn3Fh8\",\n    description=\"Extra review round\",\n    quantity=1,\n    unit_amount=10000,\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /invoice-items \\\n  -d '{\"invoice\":\"in_Pb2Xk7Mv4Qs9Lr1Wd6Tn3Fh8\",\"description\":\"Extra review round\",\"quantity\":1,\"unit_amount\":10000}'"
+          }
+        ]
       }
     },
     "/invoice-items/{id}": {
@@ -5243,7 +5736,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoiceItems.retrieve('ii_Qa6Ze2Rt8Yp4Uk1Mh7Bn3Xs9')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoice_items.retrieve(\"ii_Qa6Ze2Rt8Yp4Uk1Mh7Bn3Xs9\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api GET /invoice-items/ii_Qa6Ze2Rt8Yp4Uk1Mh7Bn3Xs9"
+          }
+        ]
       },
       "delete": {
         "operationId": "deleteInvoiceItem",
@@ -5442,7 +5952,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.invoiceItems.del('ii_Qa6Ze2Rt8Yp4Uk1Mh7Bn3Xs9')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.invoice_items.delete(\"ii_Qa6Ze2Rt8Yp4Uk1Mh7Bn3Xs9\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api DELETE /invoice-items/ii_Qa6Ze2Rt8Yp4Uk1Mh7Bn3Xs9"
+          }
+        ]
       }
     },
     "/webhook-endpoints": {
@@ -5585,7 +6112,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nfor await (const item of invoiceai.webhookEndpoints.list()) {\n  console.log(item.id)\n}"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nfor item in client.webhook_endpoints.list():\n    print(item.id)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai webhooks list"
+          }
+        ]
       },
       "post": {
         "operationId": "createWebhookEndpoint",
@@ -5840,7 +6384,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nconst result = await invoiceai.webhookEndpoints.create({\n  url: 'https://example.com/webhooks/invoice-ai',\n  events: [\n    'invoice.finalized',\n    'invoice.paid',\n  ],\n})"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nresult = client.webhook_endpoints.create(\n    url=\"https://example.com/webhooks/invoice-ai\",\n    events=[\n        \"invoice.finalized\",\n        \"invoice.paid\",\n    ],\n)"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai api POST /webhook-endpoints \\\n  -d '{\"url\":\"https://example.com/webhooks/invoice-ai\",\"events\":[\"invoice.finalized\",\"invoice.paid\"]}'"
+          }
+        ]
       }
     },
     "/webhook-endpoints/{id}": {
@@ -5917,7 +6478,24 @@
           "429": {
             "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "typescript",
+            "label": "TypeScript",
+            "source": "import InvoiceAI from '@horizonpay/invoice-ai'\n\nconst invoiceai = new InvoiceAI() // reads INVOICE_AI_API_KEY\n\nawait invoiceai.webhookEndpoints.del('5b1e9f4e-2c3a-4d7b-9a61-0f2e8c4d7a13')"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "from invoice_ai import InvoiceAI\n\nclient = InvoiceAI()  # reads INVOICE_AI_API_KEY\n\nclient.webhook_endpoints.delete(\"5b1e9f4e-2c3a-4d7b-9a61-0f2e8c4d7a13\")"
+          },
+          {
+            "lang": "bash",
+            "label": "CLI",
+            "source": "invoice-ai webhooks delete 5b1e9f4e-2c3a-4d7b-9a61-0f2e8c4d7a13"
+          }
+        ]
       }
     }
   },
