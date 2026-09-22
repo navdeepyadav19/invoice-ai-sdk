@@ -11,16 +11,17 @@ export type InvoiceListParams = NonNullable<operations['listInvoices']['paramete
 export type InvoiceCreateParams = NonNullable<operations['createInvoice']['requestBody']>['content']['application/json']
 export type InvoiceUpdateParams = NonNullable<operations['updateInvoice']['requestBody']>['content']['application/json']
 export type InvoiceSendParams = NonNullable<operations['sendInvoice']['requestBody']>['content']['application/json']
-export type InvoiceSendResult = operations['sendInvoice']['responses'][200]['content']['application/json']['data']
+export type InvoiceSendResponse = operations['sendInvoice']['responses'][200]['content']['application/json']
 export type InvoicePayParams = NonNullable<operations['payInvoice']['requestBody']>['content']['application/json']
 export type InvoiceVoidParams = NonNullable<operations['voidInvoice']['requestBody']>['content']['application/json']
 export type InvoicePdfParams = NonNullable<operations['retrieveInvoicePdf']['parameters']['query']>
+export type InvoiceEventsParams = NonNullable<operations['listInvoiceEvents']['parameters']['query']>
 
 /** Invoices: `invoiceai.invoices`. */
 export class Invoices extends APIResource {
   /**
    * List invoices.
-   * Returns invoices newest first, cursor-paginated, without `lines`. `status=overdue` works even though no invoice is stored as overdue — it selects open invoices past `due_date`. An unknown `customer` is a `404`.
+   * Returns invoices newest first, cursor-paginated, without `lines`. `status=overdue` selects open invoices whose `due_date` is before today (UTC); `status=open` returns every open invoice, overdue ones included. An unknown `customer` is a `404`.
    * `GET /invoices` · scope `invoices:read`
    */
   list(params?: InvoiceListParams, options?: RequestOptions): PagePromise<Invoice> {
@@ -47,7 +48,7 @@ export class Invoices extends APIResource {
 
   /**
    * Update a draft invoice.
-   * Drafts only. Merges the fields you send over the stored draft; `items`, when sent, replaces every line (omit it to keep them). `customer` is required. Totals are recomputed and line ids change. Once finalized an invoice is frozen — the customer may already have the PDF — and this returns `409`. Emits `invoice.updated`.
+   * Drafts only. A partial update: send only the fields to change — omitted ones (`customer` included) keep their stored value, and `items`, when sent, replaces every line (omit it to keep them). Totals are recomputed and line ids change. Once finalized an invoice is frozen — the customer may already have the PDF — and this returns `409`. Emits `invoice.updated`.
    * `PATCH /invoices/{id}` · scope `invoices:write`
    */
   update(id: string, params: InvoiceUpdateParams, options?: RequestOptions): APIPromise<Invoice> {
@@ -77,8 +78,8 @@ export class Invoices extends APIResource {
    * Emails the invoice PDF and a link to the public invoice page, via Resend, to `to` or else the customer email recorded on the invoice. A draft is finalized first (this scope covers that — `invoices:finalize` is not needed). Open and paid invoices can be re-sent; void ones cannot.
    * `POST /invoices/{id}/send` · scope `invoices:send` · idempotent (automatic key)
    */
-  send(id: string, params?: InvoiceSendParams, options?: RequestOptions): APIPromise<InvoiceSendResult> {
-    return this._client._request<InvoiceSendResult>({ method: 'POST', path: `/invoices/${pathParam('id', id)}/send`, body: params, options, requiredScope: 'invoices:send' }, 'data')
+  send(id: string, params?: InvoiceSendParams, options?: RequestOptions): APIPromise<InvoiceSendResponse> {
+    return this._client._request<InvoiceSendResponse>({ method: 'POST', path: `/invoices/${pathParam('id', id)}/send`, body: params, options, requiredScope: 'invoices:send' }, 'body')
   }
 
   /**
@@ -115,10 +116,10 @@ export class Invoices extends APIResource {
 
   /**
    * List invoice events.
-   * Returns the full history of one invoice, newest first (not paginated): created, updated, finalized, emailed, viewed, downloaded, paid, voided. `invoice.viewed` and `invoice.downloaded` are recorded when the customer opens the public link — the way to tell they actually looked at it.
+   * Returns the history of one invoice, newest first, cursor-paginated: created, updated, finalized, emailed, viewed, downloaded, paid, voided. `invoice.viewed` and `invoice.downloaded` are recorded when the customer opens the public link — the way to tell they actually looked at it.
    * `GET /invoices/{id}/events` · scope `invoices:read`
    */
-  events(id: string, options?: RequestOptions): PagePromise<InvoiceEvent> {
-    return this._client._requestPage<InvoiceEvent>({ method: 'GET', path: `/invoices/${pathParam('id', id)}/events`, options, requiredScope: 'invoices:read' })
+  events(id: string, params?: InvoiceEventsParams, options?: RequestOptions): PagePromise<InvoiceEvent> {
+    return this._client._requestPage<InvoiceEvent>({ method: 'GET', path: `/invoices/${pathParam('id', id)}/events`, query: params, options, requiredScope: 'invoices:read' })
   }
 }

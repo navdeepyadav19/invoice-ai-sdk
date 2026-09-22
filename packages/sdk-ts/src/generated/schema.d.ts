@@ -47,7 +47,7 @@ export interface paths {
          *
          *     **Scope:** `clients:write`
          *
-         *     **Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`.
+         *     **Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["createCustomer"];
         delete?: never;
@@ -111,7 +111,7 @@ export interface paths {
          *
          *     **Scope:** `products:write`
          *
-         *     **Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`.
+         *     **Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["createProduct"];
         delete?: never;
@@ -175,7 +175,7 @@ export interface paths {
          *
          *     **Scope:** `products:write`
          *
-         *     **Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`.
+         *     **Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["createPrice"];
         delete?: never;
@@ -227,7 +227,7 @@ export interface paths {
         };
         /**
          * List invoices
-         * @description Returns invoices newest first, cursor-paginated, without `lines`. `status=overdue` works even though no invoice is stored as overdue — it selects open invoices past `due_date`. An unknown `customer` is a `404`.
+         * @description Returns invoices newest first, cursor-paginated, without `lines`. `status=overdue` selects open invoices whose `due_date` is before today (UTC); `status=open` returns every open invoice, overdue ones included. An unknown `customer` is a `404`.
          *
          *     **Scope:** `invoices:read` + `clients:read` (when filtering by `customer`)
          */
@@ -241,7 +241,7 @@ export interface paths {
          *
          *     **Scope:** `invoices:write` + `business:read` + `clients:read`
          *
-         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422`.
+         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["createInvoice"];
         delete?: never;
@@ -277,7 +277,7 @@ export interface paths {
         head?: never;
         /**
          * Update a draft invoice
-         * @description Drafts only. Merges the fields you send over the stored draft; `items`, when sent, replaces every line (omit it to keep them). `customer` is required. Totals are recomputed and line ids change. Once finalized an invoice is frozen — the customer may already have the PDF — and this returns `409`. Emits `invoice.updated`.
+         * @description Drafts only. A partial update: send only the fields to change — omitted ones (`customer` included) keep their stored value, and `items`, when sent, replaces every line (omit it to keep them). Totals are recomputed and line ids change. Once finalized an invoice is frozen — the customer may already have the PDF — and this returns `409`. Emits `invoice.updated`.
          *
          *     **Scope:** `invoices:write` + `business:read` + `clients:read`
          */
@@ -299,7 +299,7 @@ export interface paths {
          *
          *     **Scope:** `invoices:finalize`
          *
-         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422`.
+         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["finalizeInvoice"];
         delete?: never;
@@ -327,7 +327,7 @@ export interface paths {
          *
          *     **Scope:** `invoices:send`
          *
-         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422`.
+         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["sendInvoice"];
         delete?: never;
@@ -351,7 +351,7 @@ export interface paths {
          *
          *     **Scope:** `payments:write`
          *
-         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422`.
+         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["payInvoice"];
         delete?: never;
@@ -375,7 +375,7 @@ export interface paths {
          *
          *     **Scope:** `invoices:finalize`
          *
-         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422`.
+         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["voidInvoice"];
         delete?: never;
@@ -415,7 +415,7 @@ export interface paths {
         };
         /**
          * List invoice events
-         * @description Returns the full history of one invoice, newest first (not paginated): created, updated, finalized, emailed, viewed, downloaded, paid, voided. `invoice.viewed` and `invoice.downloaded` are recorded when the customer opens the public link — the way to tell they actually looked at it.
+         * @description Returns the history of one invoice, newest first, cursor-paginated: created, updated, finalized, emailed, viewed, downloaded, paid, voided. `invoice.viewed` and `invoice.downloaded` are recorded when the customer opens the public link — the way to tell they actually looked at it.
          *
          *     **Scope:** `invoices:read`
          */
@@ -449,7 +449,7 @@ export interface paths {
          *
          *     **Scope:** `invoices:write` + `business:read`
          *
-         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422`.
+         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["createInvoiceItem"];
         delete?: never;
@@ -495,7 +495,7 @@ export interface paths {
         };
         /**
          * List webhook endpoints
-         * @description Returns all your webhook endpoints, newest first (not paginated). Signing secrets are never included — only once, at creation.
+         * @description Returns your webhook endpoints, newest first, cursor-paginated. Signing secrets are never included — only once, at creation.
          *
          *     **Scope:** `webhooks:manage`
          */
@@ -503,11 +503,11 @@ export interface paths {
         put?: never;
         /**
          * Create a webhook endpoint
-         * @description Registers an https URL to receive events. The response carries the signing `secret` (`whsec_…`) — the only time it is returned, so store it. The URL must use https and must not resolve to a private, loopback or link-local address.
+         * @description Registers an https URL to receive events. The response carries the signing `secret` (`whsec_` + base64) — the only time it is returned, so store it. The URL must use https and must not resolve to a private, loopback or link-local address.
          *
          *     **Scope:** `webhooks:manage`
          *
-         *     **Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`.
+         *     **Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["createWebhookEndpoint"];
         delete?: never;
@@ -814,7 +814,7 @@ export interface components {
              */
             unit?: "NOS" | "PCS" | "KGS" | "GMS" | "LTR" | "MTR" | "SQF" | "SQM" | "HRS" | "DAY" | "MON" | "BOX" | "SET" | "OTH";
             /**
-             * @description Price per unit in integer minor units. Required unless `price` is given.
+             * @description Price per unit in integer minor units of the invoice currency. Required unless `price` is given.
              * @example 50000
              */
             unit_amount?: number;
@@ -830,13 +830,13 @@ export interface components {
              */
             tax_rate?: number;
         };
-        /** @description Fields other than `customer` are optional; omitted ones keep their stored value. */
+        /** @description Any subset of fields. Omitted fields keep their stored value; omit `items` to keep the lines. */
         InvoiceUpdate: {
             /**
-             * @description The customer to bill, `cus_…` or UUID. Required on update as well — resend the current customer to keep it.
+             * @description Bill a different customer, `cus_…` or UUID. Omit to keep the current one.
              * @example cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6
              */
-            customer: string;
+            customer?: string;
             /**
              * @description ISO 4217 code. Defaults to your business currency.
              * @example USD
@@ -918,7 +918,7 @@ export interface components {
              */
             unit?: "NOS" | "PCS" | "KGS" | "GMS" | "LTR" | "MTR" | "SQF" | "SQM" | "HRS" | "DAY" | "MON" | "BOX" | "SET" | "OTH";
             /**
-             * @description Price per unit in integer minor units. Required unless `price` is given.
+             * @description Price per unit in integer minor units of the invoice currency. Required unless `price` is given.
              * @example 50000
              */
             unit_amount?: number;
@@ -1093,7 +1093,7 @@ export interface components {
              */
             instance: string;
             /**
-             * @description Stable machine-readable code. Branch on this, never on `detail`. One of: `validation`, `unauthorized`, `forbidden`, `not_found`, `invalid_state`, `conflict`, `idempotency_key_required`, `rate_limited`, `upstream_failed`, `internal_error`.
+             * @description Stable machine-readable code. Branch on this, never on `detail`. One of: `validation`, `idempotency_mismatch`, `unauthorized`, `forbidden`, `not_found`, `invalid_state`, `conflict`, `idempotency_key_required`, `rate_limited`, `upstream_failed`, `internal_error`.
              * @example invalid_state
              */
             code: string;
@@ -1244,7 +1244,7 @@ export interface components {
              */
             nickname: string | null;
             /**
-             * @description Price per unit. Integer minor units (`250000` is $2,500.00).
+             * @description Price per unit. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).
              * @example 2500000
              */
             unit_amount: number;
@@ -1350,32 +1350,32 @@ export interface components {
              */
             footer: string | null;
             /**
-             * @description Sum of quantity × unit_amount over all lines, before discount and tax. Integer minor units (`250000` is $2,500.00).
+             * @description Sum of quantity × unit_amount over all lines, before discount and tax. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).
              * @example 2550000
              */
             subtotal: number;
             /**
-             * @description Total discount across lines. Integer minor units (`250000` is $2,500.00).
+             * @description Total discount across lines. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).
              * @example 0
              */
             discount: number;
             /**
-             * @description `subtotal` − `discount`. Integer minor units (`250000` is $2,500.00).
+             * @description `subtotal` − `discount`. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).
              * @example 2550000
              */
             taxable: number;
             /**
-             * @description Total tax across lines. Integer minor units (`250000` is $2,500.00).
+             * @description Total tax across lines. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).
              * @example 0
              */
             tax: number;
             /**
-             * @description `taxable` + `tax`. Integer minor units (`250000` is $2,500.00).
+             * @description `taxable` + `tax`. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).
              * @example 2550000
              */
             total: number;
             /**
-             * @description What is still owed: `total` while `open` or `overdue`, otherwise 0. Integer minor units (`250000` is $2,500.00).
+             * @description What is still owed: `total` while `open` or `overdue`, otherwise 0. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).
              * @example 2550000
              */
             amount_due: number;
@@ -1451,12 +1451,12 @@ export interface components {
              */
             unit: string;
             /**
-             * @description Price per unit. Integer minor units (`250000` is $2,500.00).
+             * @description Price per unit. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).
              * @example 2500000
              */
             unit_amount: number;
             /**
-             * @description Line total after discount, including tax. Integer minor units (`250000` is $2,500.00).
+             * @description Line total after discount, including tax. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).
              * @example 2500000
              */
             amount: number;
@@ -1471,7 +1471,7 @@ export interface components {
              */
             tax_rate: number;
             /**
-             * @description Tax on this line. Integer minor units (`250000` is $2,500.00).
+             * @description Tax on this line. Integer minor units of the currency (`250000` is $2,500.00; ¥5,000 is `5000`).
              * @example 0
              */
             tax_amount: number;
@@ -1732,6 +1732,15 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            /** @description `cursor` is not a `next_cursor` this API returned. Codes: `validation`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             429: components["responses"]["RateLimited"];
         };
     };
@@ -1815,7 +1824,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`. */
+            /** @description The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`, `idempotency_mismatch`. */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2095,6 +2104,15 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            /** @description `cursor` is not a `next_cursor` this API returned. Codes: `validation`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             429: components["responses"]["RateLimited"];
         };
     };
@@ -2162,7 +2180,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`. */
+            /** @description The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`, `idempotency_mismatch`. */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2438,6 +2456,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description `cursor` is not a `next_cursor` this API returned. Codes: `validation`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             429: components["responses"]["RateLimited"];
         };
     };
@@ -2529,7 +2556,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`. */
+            /** @description The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`, `idempotency_mismatch`. */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2841,6 +2868,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description `cursor` is not a `next_cursor` this API returned. Codes: `validation`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             429: components["responses"]["RateLimited"];
         };
     };
@@ -2981,7 +3017,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description The body failed validation (including an unknown price or a currency mismatch), or the Idempotency-Key was reused with a different body. Codes: `validation`. */
+            /** @description The body failed validation (including an unknown price or a currency mismatch), or the Idempotency-Key was reused with a different body. Codes: `validation`, `idempotency_mismatch`. */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3159,7 +3195,6 @@ export interface operations {
             content: {
                 /**
                  * @example {
-                 *       "customer": "cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6",
                  *       "due_date": "2026-10-22",
                  *       "description": "Consulting retainer — net 30.",
                  *       "footer": "Thank you for your business."
@@ -3395,7 +3430,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description The Idempotency-Key was reused with a different request. Codes: `validation`. */
+            /** @description The Idempotency-Key was reused with a different request. Codes: `idempotency_mismatch`. */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3432,7 +3467,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Sent. */
+            /** @description Sent. The invoice (finalized if it was a draft, with lines) plus the address it went to. */
             200: {
                 headers: {
                     "X-Request-Id": components["headers"]["RequestId"];
@@ -3447,33 +3482,74 @@ export interface operations {
                      * @example {
                      *       "data": {
                      *         "id": "in_Pb2Xk7Mv4Qs9Lr1Wd6Tn3Fh8",
-                     *         "invoice_number": "INV-0042",
-                     *         "emailed": true,
-                     *         "public_url": "https://invoice.horizonpay.co/i/2b7e4c1a-9f3d-4e68-8a5b-0d1c7f3e9a46"
-                     *       }
+                     *         "object": "invoice",
+                     *         "number": "INV-0042",
+                     *         "status": "open",
+                     *         "customer": "cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6",
+                     *         "currency": "USD",
+                     *         "collection_method": "send_invoice",
+                     *         "issue_date": "2026-09-22",
+                     *         "due_date": "2026-10-22",
+                     *         "description": "Consulting retainer.",
+                     *         "footer": null,
+                     *         "subtotal": 2550000,
+                     *         "discount": 0,
+                     *         "taxable": 2550000,
+                     *         "tax": 0,
+                     *         "total": 2550000,
+                     *         "amount_due": 2550000,
+                     *         "amount_in_words": "Twenty Five Thousand Five Hundred USD Only",
+                     *         "public_url_token": "2b7e4c1a-9f3d-4e68-8a5b-0d1c7f3e9a46",
+                     *         "finalized_at": "2026-09-22T10:00:00.000Z",
+                     *         "paid_at": null,
+                     *         "voided_at": null,
+                     *         "void_reason": null,
+                     *         "created": "2026-09-22T09:30:00.000Z",
+                     *         "updated": "2026-09-22T10:00:00.000Z",
+                     *         "lines": {
+                     *           "data": [
+                     *             {
+                     *               "id": "ii_Da4Vq9Ns2Kx7Bm3Yt8Rc1Lp6",
+                     *               "object": "invoiceitem",
+                     *               "price": "price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7",
+                     *               "product": "prod_Hy7Rq2Lm9Xc4Vb8Nt3Kd6Pw1",
+                     *               "description": "Consulting retainer",
+                     *               "quantity": 1,
+                     *               "unit": "NOS",
+                     *               "unit_amount": 2500000,
+                     *               "amount": 2500000,
+                     *               "discount_percent": 0,
+                     *               "tax_rate": 0,
+                     *               "tax_amount": 0
+                     *             },
+                     *             {
+                     *               "id": "ii_Ew8Hz3Jc6Tq1Ms5Nv9Kb2Xr4",
+                     *               "object": "invoiceitem",
+                     *               "price": null,
+                     *               "product": null,
+                     *               "description": "Onboarding workshop",
+                     *               "quantity": 1,
+                     *               "unit": "NOS",
+                     *               "unit_amount": 50000,
+                     *               "amount": 50000,
+                     *               "discount_percent": 0,
+                     *               "tax_rate": 0,
+                     *               "tax_amount": 0
+                     *             }
+                     *           ]
+                     *         }
+                     *       },
+                     *       "emailed_to": "ap@acme.example"
                      *     }
                      */
                     "application/json": {
-                        /** @description The send result. */
-                        data: {
-                            /**
-                             * @description The invoice, `in_…`.
-                             * @example in_Pb2Xk7Mv4Qs9Lr1Wd6Tn3Fh8
-                             */
-                            id: string;
-                            /**
-                             * @description The invoice number (assigned now if it was a draft).
-                             * @example INV-0042
-                             */
-                            invoice_number: string;
-                            /** @description Always `true` on success. */
-                            emailed: boolean;
-                            /**
-                             * @description The public invoice page included in the email.
-                             * @example https://invoice.horizonpay.co/i/2b7e4c1a-9f3d-4e68-8a5b-0d1c7f3e9a46
-                             */
-                            public_url: string;
-                        };
+                        /** @description The invoice, finalized if it was a draft, with lines. */
+                        data: components["schemas"]["Invoice"];
+                        /**
+                         * @description The address the email was sent to: `to`, or the customer email.
+                         * @example ap@acme.example
+                         */
+                        emailed_to: string;
                     };
                 };
             };
@@ -3497,7 +3573,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description No recipient: neither `to` nor a customer email. Or the Idempotency-Key was reused with a different body. Codes: `validation`. */
+            /** @description No recipient: neither `to` nor a customer email. Or the Idempotency-Key was reused with a different body. Codes: `validation`, `idempotency_mismatch`. */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3622,7 +3698,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description The body is not valid JSON, or the Idempotency-Key was reused with a different body. Codes: `validation`. */
+            /** @description The body is not valid JSON, or the Idempotency-Key was reused with a different body. Codes: `idempotency_mismatch`. */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3727,7 +3803,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description `reason` is missing or blank, or the Idempotency-Key was reused with a different body. Codes: `validation`. */
+            /** @description `reason` is missing or blank, or the Idempotency-Key was reused with a different body. Codes: `validation`, `idempotency_mismatch`. */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3786,7 +3862,12 @@ export interface operations {
     };
     listInvoiceEvents: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description The `next_cursor` from the previous page. Opaque — do not build it yourself. */
+                cursor?: string;
+                /** @description Page size, 1–100. Defaults to 25. */
+                limit?: number;
+            };
             header?: never;
             path: {
                 /** @description The invoice, `in_…` or UUID. */
@@ -3796,7 +3877,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Events, newest first. */
+            /** @description A page of events, newest first. */
             200: {
                 headers: {
                     "X-Request-Id": components["headers"]["RequestId"];
@@ -3854,12 +3935,18 @@ export interface operations {
                      *           },
                      *           "created_at": "2026-09-22T09:30:00.000Z"
                      *         }
-                     *       ]
+                     *       ],
+                     *       "next_cursor": null
                      *     }
                      */
                     "application/json": {
                         /** @description Events, newest first. */
                         data: components["schemas"]["InvoiceEvent"][];
+                        /**
+                         * @description Pass as `cursor` to fetch the next page. `null` on the last page.
+                         * @example MjAyNi0wOS0yMlQwOTozMDowMC4wMDBafDdmM2M
+                         */
+                        next_cursor: string | null;
                     };
                 };
             };
@@ -3867,6 +3954,15 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             /** @description No such invoice. Another account's resource is also a `404`, so ids cannot be probed. Codes: `not_found`. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description `cursor` is not a `next_cursor` this API returned. Codes: `validation`. */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4100,7 +4196,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`. */
+            /** @description The body failed validation, or the Idempotency-Key was reused with a different body. Codes: `validation`, `idempotency_mismatch`. */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -4292,14 +4388,19 @@ export interface operations {
     };
     listWebhookEndpoints: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description The `next_cursor` from the previous page. Opaque — do not build it yourself. */
+                cursor?: string;
+                /** @description Page size, 1–100. Defaults to 25. */
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Your endpoints. */
+            /** @description A page of endpoints. */
             200: {
                 headers: {
                     "X-Request-Id": components["headers"]["RequestId"];
@@ -4324,17 +4425,32 @@ export interface operations {
                      *           "failure_count": 0,
                      *           "created_at": "2026-09-22T09:30:00.000Z"
                      *         }
-                     *       ]
+                     *       ],
+                     *       "next_cursor": null
                      *     }
                      */
                     "application/json": {
-                        /** @description Endpoints, newest first. */
+                        /** @description Webhook endpoints, newest first. */
                         data: components["schemas"]["WebhookEndpoint"][];
+                        /**
+                         * @description Pass as `cursor` to fetch the next page. `null` on the last page.
+                         * @example MjAyNi0wOS0yMlQwOTozMDowMC4wMDBafDdmM2M
+                         */
+                        next_cursor: string | null;
                     };
                 };
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            /** @description `cursor` is not a `next_cursor` this API returned. Codes: `validation`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             429: components["responses"]["RateLimited"];
         };
     };
@@ -4421,7 +4537,7 @@ export interface operations {
                              */
                             created_at: string;
                             /**
-                             * @description Signing secret for verifying `webhook-signature`. Returned only in this response.
+                             * @description Signing secret for verifying `webhook-signature`: `whsec_` followed by standard base64 (Standard Webhooks). Returned only in this response.
                              * @example whsec_Zm9vYmFyYmF6cXV4cXV1eGNvcmdl
                              */
                             secret: string;

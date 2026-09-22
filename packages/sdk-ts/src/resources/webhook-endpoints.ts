@@ -7,6 +7,7 @@ import type { PagePromise } from '../core/pagination'
 import type { operations } from '../generated/schema'
 import type { WebhookEndpoint } from '../generated/types'
 
+export type WebhookEndpointListParams = NonNullable<operations['listWebhookEndpoints']['parameters']['query']>
 export type WebhookEndpointCreateParams = NonNullable<operations['createWebhookEndpoint']['requestBody']>['content']['application/json']
 export type WebhookEndpointCreateResult = operations['createWebhookEndpoint']['responses'][201]['content']['application/json']['data']
 
@@ -14,16 +15,16 @@ export type WebhookEndpointCreateResult = operations['createWebhookEndpoint']['r
 export class WebhookEndpoints extends APIResource {
   /**
    * List webhook endpoints.
-   * Returns all your webhook endpoints, newest first (not paginated). Signing secrets are never included — only once, at creation.
+   * Returns your webhook endpoints, newest first, cursor-paginated. Signing secrets are never included — only once, at creation.
    * `GET /webhook-endpoints` · scope `webhooks:manage`
    */
-  list(options?: RequestOptions): PagePromise<WebhookEndpoint> {
-    return this._client._requestPage<WebhookEndpoint>({ method: 'GET', path: `/webhook-endpoints`, options, requiredScope: 'webhooks:manage' })
+  list(params?: WebhookEndpointListParams, options?: RequestOptions): PagePromise<WebhookEndpoint> {
+    return this._client._requestPage<WebhookEndpoint>({ method: 'GET', path: `/webhook-endpoints`, query: params, options, requiredScope: 'webhooks:manage' })
   }
 
   /**
    * Create a webhook endpoint.
-   * Registers an https URL to receive events. The response carries the signing `secret` (`whsec_…`) — the only time it is returned, so store it. The URL must use https and must not resolve to a private, loopback or link-local address.
+   * Registers an https URL to receive events. The response carries the signing `secret` (`whsec_` + base64) — the only time it is returned, so store it. The URL must use https and must not resolve to a private, loopback or link-local address.
    * `POST /webhook-endpoints` · scope `webhooks:manage` · idempotent (automatic key)
    */
   create(params: WebhookEndpointCreateParams, options?: RequestOptions): APIPromise<WebhookEndpointCreateResult> {

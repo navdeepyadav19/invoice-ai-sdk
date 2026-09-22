@@ -17,11 +17,11 @@ export type { ProductListParams, ProductCreateParams, ProductUpdateParams } from
 export { Prices } from './prices'
 export type { PriceListParams, PriceCreateParams, PriceUpdateParams } from './prices'
 export { Invoices } from './invoices'
-export type { InvoiceListParams, InvoiceCreateParams, InvoiceUpdateParams, InvoiceSendParams, InvoiceSendResult, InvoicePayParams, InvoiceVoidParams, InvoicePdfParams } from './invoices'
+export type { InvoiceListParams, InvoiceCreateParams, InvoiceUpdateParams, InvoiceSendParams, InvoiceSendResponse, InvoicePayParams, InvoiceVoidParams, InvoicePdfParams, InvoiceEventsParams } from './invoices'
 export { InvoiceItems } from './invoice-items'
 export type { InvoiceItemListParams, InvoiceItemCreateParams, InvoiceItemDeleteParams } from './invoice-items'
 export { WebhookEndpoints } from './webhook-endpoints'
-export type { WebhookEndpointCreateParams, WebhookEndpointCreateResult } from './webhook-endpoints'
+export type { WebhookEndpointListParams, WebhookEndpointCreateParams, WebhookEndpointCreateResult } from './webhook-endpoints'
 
 /** The client with every API resource attached. `InvoiceAI` extends this. */
 export class InvoiceAIResources extends BaseClient {

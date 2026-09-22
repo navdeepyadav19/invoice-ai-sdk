@@ -24,7 +24,7 @@ export const OPERATIONS = [
   { operationId: 'updateInvoice', httpMethod: 'PATCH', path: '/invoices/{id}', resource: 'invoices', method: 'update', kind: 'data', scope: 'invoices:write' },
   { operationId: 'deleteInvoice', httpMethod: 'DELETE', path: '/invoices/{id}', resource: 'invoices', method: 'del', kind: 'void', scope: 'invoices:write' },
   { operationId: 'finalizeInvoice', httpMethod: 'POST', path: '/invoices/{id}/finalize', resource: 'invoices', method: 'finalize', kind: 'data', scope: 'invoices:finalize' },
-  { operationId: 'sendInvoice', httpMethod: 'POST', path: '/invoices/{id}/send', resource: 'invoices', method: 'send', kind: 'data', scope: 'invoices:send' },
+  { operationId: 'sendInvoice', httpMethod: 'POST', path: '/invoices/{id}/send', resource: 'invoices', method: 'send', kind: 'body', scope: 'invoices:send' },
   { operationId: 'payInvoice', httpMethod: 'POST', path: '/invoices/{id}/pay', resource: 'invoices', method: 'pay', kind: 'data', scope: 'payments:write' },
   { operationId: 'voidInvoice', httpMethod: 'POST', path: '/invoices/{id}/void', resource: 'invoices', method: 'void', kind: 'data', scope: 'invoices:finalize' },
   { operationId: 'retrieveInvoicePdf', httpMethod: 'GET', path: '/invoices/{id}/pdf', resource: 'invoices', method: 'pdf', kind: 'binary', scope: 'invoices:read' },
