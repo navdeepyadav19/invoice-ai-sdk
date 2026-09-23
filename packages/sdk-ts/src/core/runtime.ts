@@ -1,6 +1,6 @@
 /**
  * Runtime detection that never touches Node-only globals directly, so the SDK
- * loads unchanged in Node 18+, Bun, Deno, browsers and edge runtimes.
+ * loads unchanged in Node 20+, Bun, Deno, browsers and edge runtimes.
  */
 
 interface ProcessLike {

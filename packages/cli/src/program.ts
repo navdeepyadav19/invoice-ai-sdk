@@ -3,6 +3,7 @@ import { registerApi } from './commands/api'
 import { registerAuth } from './commands/auth'
 import { registerCompletion } from './commands/completion'
 import { registerCustomers } from './commands/customers'
+import { registerInvoiceItems } from './commands/invoice-items'
 import { registerInvoices } from './commands/invoices'
 import { registerOpen } from './commands/open'
 import { registerPrices } from './commands/prices'
@@ -36,7 +37,7 @@ export function buildProgram(deps: Deps): Command {
     .configureHelp({ sortSubcommands: false, showGlobalOptions: true })
 
   program
-    .description('Invoice-AI from your terminal. Log in once, then manage customers, products, prices, invoices and webhooks.')
+    .description('Invoice-AI from your terminal. Log in once, then manage customers, products, prices, invoices, invoice items and webhooks.')
     .version(CLI_VERSION, '-v, --version', 'print the CLI version')
     .helpOption('-h, --help', 'show help')
     .option('--api-key <key>', 'API key to use (overrides INVOICE_AI_API_KEY and the saved profile)')
@@ -78,6 +79,7 @@ Exit codes: 0 ok · 1 API error · 2 usage error · 3 auth · 4 rate limited`,
   registerProducts(program, act)
   registerPrices(program, act)
   registerInvoices(program, act)
+  registerInvoiceItems(program, act)
   registerWebhooks(program, act)
   registerApi(program, act)
   registerOpen(program, act)

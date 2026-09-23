@@ -25,6 +25,15 @@ export function parsePositiveNumber(value: string): number {
   return n
 }
 
+/** A percentage from 0 to 100 (tax rates, discounts). */
+export function parsePercent(value: string): number {
+  const n = Number(value)
+  if (value.trim() === '' || !Number.isFinite(n) || n < 0 || n > 100) {
+    throw new InvalidArgumentError('Expected a percentage from 0 to 100.')
+  }
+  return n
+}
+
 export function parseBool(value: string): boolean {
   const v = value.toLowerCase()
   if (['true', 'yes', '1'].includes(v)) return true
