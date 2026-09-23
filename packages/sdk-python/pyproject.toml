@@ -1,10 +1,11 @@
 [project]
 name = "horizonpay-invoice-ai"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Official Python SDK for the Invoice-AI API."
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.9"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
 authors = [{ name = "HorizonPay" }]
 keywords = ["invoice-ai", "invoicing", "sdk", "api"]
 classifiers = [
@@ -12,7 +13,6 @@ classifiers = [
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -26,8 +26,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://invoice.horizonpay.co"
-Documentation = "https://invoice.horizonpay.co/docs"
+Homepage = "https://docs.horizonpay.co"
+Documentation = "https://docs.horizonpay.co/sdks/overview"
+Repository = "https://github.com/navdeepyadav19/invoice-ai-sdk"
+Issues = "https://github.com/navdeepyadav19/invoice-ai-sdk/issues"
+Changelog = "https://github.com/navdeepyadav19/invoice-ai-sdk/blob/main/packages/sdk-python/CHANGELOG.md"
 
 [dependency-groups]
 dev = [
@@ -41,14 +44,17 @@ dev = [
 ]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]  # PEP 639 `license-files`
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "invoice_ai/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["invoice_ai"]
 
 [tool.hatch.build.targets.sdist]
-include = ["invoice_ai", "README.md", "pyproject.toml"]
+include = ["invoice_ai", "README.md", "CHANGELOG.md", "LICENSE", "pyproject.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -59,13 +65,13 @@ markers = ["contract: every SDK method against a Prism mock of api-docs/openapi.
 
 [tool.ruff]
 line-length = 120
-target-version = "py39"
+target-version = "py310"
 extend-exclude = ["invoice_ai/types/_generated.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
 ignore = [
-  "UP006", "UP007", "UP035", "UP045", # keep typing.List/Optional: the package supports Python 3.9
+  "UP006", "UP007", "UP035", "UP045", # keep typing.List/Optional, matching the generated code
   "RUF001", "RUF002", "RUF003",       # docstrings use typographic characters on purpose
 ]
 
@@ -77,5 +83,6 @@ ignore = [
 
 [tool.mypy]
 strict = true
+python_version = "3.10"
 packages = ["invoice_ai"]
 plugins = ["pydantic.mypy"]
