@@ -3,23 +3,45 @@
   "version": "0.1.0",
   "description": "The Invoice-AI command line: log in with your browser, then manage customers, products, prices, invoices and webhooks from your terminal.",
   "license": "MIT",
+  "author": "HorizonPay",
+  "homepage": "https://docs.horizonpay.co",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/navdeepyadav19/invoice-ai-sdk.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/navdeepyadav19/invoice-ai-sdk/issues"
+  },
+  "keywords": [
+    "invoice-ai",
+    "horizonpay",
+    "invoice",
+    "invoicing",
+    "billing",
+    "payments",
+    "gst",
+    "webhooks",
+    "cli",
+    "command-line",
+    "terminal"
+  ],
   "type": "module",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "bin": {
     "invoice-ai": "./dist/index.js"
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
-  "keywords": [
-    "invoice-ai",
-    "invoicing",
-    "cli"
-  ],
-  "homepage": "https://invoice.horizonpay.co",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit -p .",
@@ -28,7 +50,7 @@
     "docs": "node scripts/gen-docs.mjs"
   },
   "dependencies": {
-    "@horizonpay/invoice-ai": "workspace:*",
+    "@horizonpay/invoice-ai": "workspace:^",
     "@napi-rs/keyring": "^2.1.0",
     "open": "^10.2.0"
   },

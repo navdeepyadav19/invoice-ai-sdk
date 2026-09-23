@@ -131,6 +131,29 @@ describe('invoice-ai (built) against a Prism mock', () => {
     expect(res.stderr).toContain('Created draft invoice')
   })
 
+  it('invoice-items create and list match the spec', async (t) => {
+    if (!baseURL) return t.skip()
+    const created = await cli([
+      'invoice-items', 'create',
+      '--invoice', 'in_Pb2Xk7Mv4Qs9Lr1Wd6Tn3Fh8',
+      '--description', 'Rush fee', '--unit-amount', '5000',
+      '--json',
+    ])
+    expect(created.exitCode, created.stderr).toBe(0)
+    expect(JSON.parse(created.stdout).object).toBe('invoice')
+
+    const listed = await cli(['invoice-items', 'list', '--invoice', 'in_Pb2Xk7Mv4Qs9Lr1Wd6Tn3Fh8', '--json'])
+    expect(listed.exitCode, listed.stderr).toBe(0)
+    expect(JSON.parse(listed.stdout).data[0].id).toMatch(/^ii_/)
+  })
+
+  it('prices update sends a valid PATCH', async (t) => {
+    if (!baseURL) return t.skip()
+    const res = await cli(['prices', 'update', 'price_Jc5Tn8Wq1Ze6Ra3Ym9Ub2Gs7', '--nickname', 'Annual', '--tax-rate', '18', '--json'])
+    expect(res.exitCode, res.stderr).toBe(0)
+    expect(JSON.parse(res.stdout).object).toBe('price')
+  })
+
   it('whoami --json reads the business through the SDK', async (t) => {
     if (!baseURL) return t.skip()
     const res = await cli(['whoami', '--json'])
