@@ -6,11 +6,8 @@ export const PACKAGE_NAME = '@horizonpay/invoice-ai-cli'
 /** The web app. Device login, `open` and `logout` talk to it directly. */
 export const DEFAULT_SITE_URL = 'https://invoice.horizonpay.co'
 
-/**
- * Where `invoice-ai docs` points. Switch to https://docs.horizonpay.co once
- * that domain is live; nothing else needs to change.
- */
-export const DOCS_BASE_URL = 'https://invoice.mintlify.app'
+/** Where `invoice-ai docs` points. */
+export const DOCS_BASE_URL = 'https://docs.horizonpay.co'
 
 /** `invoice-ai docs <topic>` → page path under DOCS_BASE_URL. */
 export const DOCS_TOPICS: Readonly<Record<string, string>> = {

@@ -1,6 +1,6 @@
 # horizonpay-invoice-ai
 
-The official Python SDK for the [Invoice-AI API](https://invoice.horizonpay.co). It supports Python 3.9+, with a sync client (`InvoiceAI`) and an asyncio client (`AsyncInvoiceAI`), and depends only on `httpx` and `pydantic`.
+The official Python SDK for the [Invoice-AI API](https://invoice.horizonpay.co). It supports Python 3.10+, with a sync client (`InvoiceAI`) and an asyncio client (`AsyncInvoiceAI`), and depends only on `httpx` and `pydantic`.
 
 ```sh
 pip install horizonpay-invoice-ai      # or: uv add horizonpay-invoice-ai
@@ -41,7 +41,7 @@ async with AsyncInvoiceAI() as client:
 - **Money.** Amounts are integers in minor units. `to_minor("25.00", "USD")`, `from_minor(2500, "USD")` (a `Decimal`) and `format_money(5000, "JPY")` use each currency's own number of decimals.
 - **Types.** Every response is a Pydantic v2 model generated from the OpenAPI spec (`invoice_ai.types`). Parsing is lenient: a field or enum value the SDK doesn't know yet never raises.
 
-Every method takes keyword arguments, with path parameters first (`client.invoices.void("in_…", reason="Duplicate")`), plus the request options `idempotency_key`, `timeout` (seconds), `max_retries` and `extra_headers`. To read headers, use `.with_raw_response`:
+Every method takes keyword arguments, with path parameters first (`client.invoices.void("in_…", reason="Duplicate")`), plus the request options `idempotency_key`, `timeout` (in seconds, not milliseconds), `max_retries` and `extra_headers`. To read headers, use `.with_raw_response`:
 
 ```python
 raw = client.invoices.with_raw_response.retrieve("in_…")
@@ -51,19 +51,48 @@ invoice = raw.parse()
 
 For endpoints the SDK doesn't wrap yet, use `client.request("GET", "/business")`.
 
+## Verifying webhooks
+
+Pass the **raw** request body to `Webhook.verify` (or `client.webhooks.construct_event`). A body that has been parsed and re-serialised as JSON won't match the signature. With FastAPI:
+
+```python
+import os
+
+from fastapi import FastAPI, HTTPException, Request
+from invoice_ai import Webhook, WebhookVerificationError
+
+app = FastAPI()
+webhook = Webhook(os.environ["INVOICE_AI_WEBHOOK_SECRET"])  # whsec_…, from webhook_endpoints.create()
+
+
+@app.post("/webhooks/invoice-ai")
+async def invoice_ai_webhook(request: Request) -> dict[str, bool]:
+    raw = await request.body()  # bytes, exactly as sent
+    try:
+        event = webhook.verify(raw, request.headers)
+    except WebhookVerificationError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    if event.type == "invoice.paid":
+        print(f"{event.data.object.number} was paid")
+    return {"received": True}
+```
+
+Deliveries can repeat, so deduplicate on `event.id`. For a standard-library version, see [`examples/verify_webhook.py`](https://github.com/navdeepyadav19/invoice-ai-sdk/blob/main/packages/sdk-python/examples/verify_webhook.py).
+
 ## Configuration
 
 | Option | Env var | Default |
 |---|---|---|
 | `api_key` | `INVOICE_AI_API_KEY` | — |
 | `base_url` | `INVOICE_AI_BASE_URL` | `https://invoice.horizonpay.co/api/v1` |
-| `timeout` | | `60` seconds |
+| `timeout` | | `60` (seconds; a float, e.g. `2.5`) |
 | `max_retries` | | `2` |
 | `log_level` | `INVOICE_AI_LOG` | `warn` (`debug` logs each request to the `invoice_ai` logger, with secrets redacted) |
 | `http_client` | | a new `httpx.Client` / `httpx.AsyncClient` |
 | `default_headers` | | — |
 
-For runnable scripts, see [`examples/`](./examples).
+For runnable scripts, see [`examples/`](https://github.com/navdeepyadav19/invoice-ai-sdk/tree/main/packages/sdk-python/examples).
 
 ## Development
 

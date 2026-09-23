@@ -1,8 +1,8 @@
-import { InvalidArgumentError, type Command } from 'commander'
-import { toMinor, type PriceCreateParams } from '@horizonpay/invoice-ai'
+import type { Command } from 'commander'
+import { toMinor, type PriceCreateParams, type PriceUpdateParams } from '@horizonpay/invoice-ai'
 import { usageError } from '../errors'
 import { priceColumns, priceSummary } from '../output/columns'
-import { defined, parseBool, parseNonNegativeInt, parsePositiveInt, readDataObject } from '../util/parse'
+import { defined, parseBool, parseNonNegativeInt, parsePercent, parsePositiveInt, readDataObject } from '../util/parse'
 import { pageParams, runList, withData, withListOptions, type Act, type ListOptions } from './shared'
 
 interface PriceCreateFlags {
@@ -17,10 +17,10 @@ interface PriceCreateFlags {
   data?: string
 }
 
-const parseTaxRate = (v: string): number => {
-  const n = Number(v)
-  if (!Number.isFinite(n) || n < 0 || n > 100) throw new InvalidArgumentError('Expected a percentage from 0 to 100.')
-  return n
+interface PriceUpdateFlags {
+  nickname?: string
+  taxRate?: number
+  data?: string
 }
 
 export function registerPrices(program: Command, act: Act): void {
@@ -74,7 +74,7 @@ export function registerPrices(program: Command, act: Act): void {
       .option('--nickname <text>', 'label shown in the dashboard')
       .option('--interval <interval>', 'makes it recurring: day, week, month or year')
       .option('--interval-count <n>', 'intervals between bills (default 1)', parsePositiveInt)
-      .option('--tax-rate <percent>', 'default tax percentage for lines billed from this price', parseTaxRate),
+      .option('--tax-rate <percent>', 'default tax percentage for lines billed from this price', parsePercent),
   )
     .addHelpText('after', '\nExample:\n  $ invoice-ai prices create --product prod_123 --amount 25.00 --currency USD')
     .action(
@@ -119,6 +119,33 @@ export function registerPrices(program: Command, act: Act): void {
         const client = await ctx.client()
         const price = await client.prices.create(body as PriceCreateParams)
         ctx.success(`Created price ${price.id}`)
+        ctx.printObject(price, { columns: priceColumns, summary: priceSummary })
+      }),
+    )
+
+  withData(
+    prices
+      .command('update <id>')
+      .description('Update a price (nickname, default tax rate)')
+      .option('--nickname <text>', 'label shown in the dashboard ("" clears it)')
+      .option('--tax-rate <percent>', 'default tax percentage for new lines billed from this price', parsePercent),
+  )
+    .addHelpText(
+      'after',
+      '\nAmount, currency and interval changes go through --data. The product can\'t change;\ncreate a new price instead.\n\nExample:\n  $ invoice-ai prices update price_123 --nickname "Annual" --tax-rate 18',
+    )
+    .action(
+      act<PriceUpdateFlags>(async (ctx, [id], opts) => {
+        const body = {
+          ...(await readDataObject(opts.data, ctx.deps.readStdin)),
+          ...defined({ nickname: opts.nickname, tax_rate: opts.taxRate }),
+        }
+        if (Object.keys(body).length === 0) {
+          throw usageError('Nothing to update.', 'Pass --nickname, --tax-rate or --data.')
+        }
+        const client = await ctx.client()
+        const price = await client.prices.update(id!, body as PriceUpdateParams)
+        ctx.success(`Updated price ${price.id}`)
         ctx.printObject(price, { columns: priceColumns, summary: priceSummary })
       }),
     )

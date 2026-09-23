@@ -1,6 +1,6 @@
 # @horizonpay/invoice-ai
 
-The official TypeScript SDK for the [Invoice-AI API](https://invoice.horizonpay.co). It has no runtime dependencies and works in Node 18+, Bun, Deno and edge runtimes, from both ESM and CommonJS.
+The official TypeScript SDK for the [Invoice-AI API](https://docs.horizonpay.co). It has no runtime dependencies and works in Node 20+, Bun, Deno and edge runtimes, from both ESM and CommonJS.
 
 ```sh
 npm install @horizonpay/invoice-ai
@@ -19,6 +19,14 @@ await invoiceai.invoices.send(draft.id)
 for await (const inv of invoiceai.invoices.list({ status: 'open' })) console.log(inv.number)
 ```
 
+From CommonJS, use the named export:
+
+```js
+const { InvoiceAI } = require('@horizonpay/invoice-ai')
+
+const invoiceai = new InvoiceAI({ apiKey: process.env.INVOICE_AI_API_KEY })
+```
+
 ## What it handles for you
 
 - **Retries.** Network errors, timeouts, 408, 409 `conflict`, 429 and 5xx are retried up to `maxRetries` (default 2). Backoff is exponential with jitter, and the SDK waits out `Retry-After` / `RateLimit-Reset`. A PATCH or DELETE that may have reached the server is never resent.
@@ -28,7 +36,7 @@ for await (const inv of invoiceai.invoices.list({ status: 'open' })) console.log
 - **Webhooks.** `await invoiceai.webhooks.constructEvent(rawBody, headers, secret)` verifies the Standard Webhooks signature and returns a typed event.
 - **Money.** Amounts are integers in minor units. `toMinor('25.00', 'USD')`, `fromMinor(2500, 'USD')` and `formatMoney(5000, 'JPY')` use each currency's own number of decimals.
 
-Every method takes request options as its last argument: `{ idempotencyKey, timeout, maxRetries, signal, headers }`. To read headers, call `.withResponse()`:
+Every method takes request options as its last argument: `{ idempotencyKey, timeout, maxRetries, signal, headers }`. `timeout` is in **milliseconds**, as it is on the client. To read headers, call `.withResponse()`:
 
 ```ts
 const { data, response } = await invoiceai.invoices.retrieve('in_…').withResponse()
@@ -43,12 +51,12 @@ For endpoints the SDK doesn't wrap yet, use `invoiceai.request('GET', '/business
 |---|---|---|
 | `apiKey` | `INVOICE_AI_API_KEY` | — |
 | `baseURL` | `INVOICE_AI_BASE_URL` | `https://invoice.horizonpay.co/api/v1` |
-| `timeout` | | `60000` ms |
+| `timeout` (milliseconds) | | `60000` (60 s) |
 | `maxRetries` | | `2` |
 | `logLevel` | `INVOICE_AI_LOG` | `warn` (`debug` logs each request, with secrets redacted) |
 | `fetch` | | global `fetch` |
 
-For runnable scripts, see [`examples/`](./examples).
+For runnable scripts, see [`examples/`](https://github.com/navdeepyadav19/invoice-ai-sdk/tree/main/packages/sdk-ts/examples). The full guide and API reference are at [docs.horizonpay.co](https://docs.horizonpay.co), and release notes are in the [changelog](https://github.com/navdeepyadav19/invoice-ai-sdk/blob/main/packages/sdk-ts/CHANGELOG.md).
 
 ## Development
 
@@ -59,3 +67,7 @@ pnpm --filter @horizonpay/invoice-ai test           # unit tests
 pnpm --filter @horizonpay/invoice-ai test:contract  # every method against a Prism mock
 pnpm --filter @horizonpay/invoice-ai build
 ```
+
+## License
+
+[MIT](https://github.com/navdeepyadav19/invoice-ai-sdk/blob/main/packages/sdk-ts/LICENSE)

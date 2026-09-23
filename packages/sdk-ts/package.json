@@ -3,10 +3,33 @@
   "version": "0.1.0",
   "description": "Official TypeScript SDK for the Invoice-AI API.",
   "license": "MIT",
+  "author": "HorizonPay",
+  "homepage": "https://docs.horizonpay.co",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/navdeepyadav19/invoice-ai-sdk.git",
+    "directory": "packages/sdk-ts"
+  },
+  "bugs": {
+    "url": "https://github.com/navdeepyadav19/invoice-ai-sdk/issues"
+  },
+  "keywords": [
+    "invoice-ai",
+    "horizonpay",
+    "invoice",
+    "invoicing",
+    "billing",
+    "payments",
+    "gst",
+    "webhooks",
+    "api-client",
+    "sdk",
+    "typescript"
+  ],
   "type": "module",
   "sideEffects": false,
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -26,15 +49,13 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
-  "keywords": [
-    "invoice-ai",
-    "invoicing",
-    "sdk",
-    "api"
-  ],
-  "homepage": "https://invoice.horizonpay.co",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit -p .",

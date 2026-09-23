@@ -3,6 +3,7 @@ import {
   type Customer,
   type Invoice,
   type InvoiceEvent,
+  type InvoiceItem,
   type Price,
   type Product,
   type WebhookEndpoint,
@@ -70,6 +71,18 @@ export const invoiceColumns: Column<Invoice>[] = [
   { header: 'TOTAL', value: (r) => r.total, display: (r) => money(r.total, r.currency) },
   { header: 'CURRENCY', value: (r) => r.currency },
   { header: 'DUE', value: (r) => r.due_date, display: (r) => date(r.due_date) },
+]
+
+/** Lines carry no currency of their own, so amounts stay in minor units. */
+export const invoiceItemColumns: Column<InvoiceItem>[] = [
+  { header: 'ID', value: (r) => r.id },
+  { header: 'DESCRIPTION', value: (r) => r.description },
+  { header: 'QTY', value: (r) => r.quantity },
+  { header: 'UNIT', value: (r) => r.unit },
+  { header: 'UNIT AMOUNT', value: (r) => r.unit_amount },
+  { header: 'TAX %', value: (r) => r.tax_rate },
+  { header: 'AMOUNT', value: (r) => r.amount },
+  { header: 'PRICE', value: (r) => r.price },
 ]
 
 export const invoiceEventColumns: Column<InvoiceEvent>[] = [
