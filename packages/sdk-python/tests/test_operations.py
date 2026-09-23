@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import inspect
 import json
+from importlib import metadata
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -74,5 +75,8 @@ def test_path_params_come_first_and_everything_else_is_keyword_only() -> None:
 
 def test_versions() -> None:
     pyproject = (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text()
-    assert f'version = "{__version__}"' in pyproject
+    # The package version is single-sourced from invoice_ai/_version.py via hatch.
+    assert 'dynamic = ["version"]' in pyproject
+    assert 'path = "invoice_ai/_version.py"' in pyproject
+    assert __version__ == metadata.version("horizonpay-invoice-ai")
     assert SPEC["info"]["version"] == API_VERSION
