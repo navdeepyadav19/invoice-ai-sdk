@@ -1,0 +1,22 @@
+{
+  "name": "invoice-ai-sdk",
+  "private": true,
+  "packageManager": "pnpm@11.1.1",
+  "description": "Official Invoice-AI SDKs (TypeScript, Python) and CLI.",
+  "scripts": {
+    "build": "pnpm -r --filter ./packages/sdk-ts --filter ./packages/cli run build",
+    "test": "pnpm -r --filter ./packages/sdk-ts --filter ./packages/cli run test",
+    "sdk:gen": "pnpm --filter @horizonpay/invoice-ai run gen:schema && tsx scripts/sdk-gen/ts.ts && tsx scripts/sdk-gen/python.ts",
+    "cli:docs": "pnpm --filter @horizonpay/invoice-ai build && pnpm --filter @horizonpay/invoice-ai-cli build && pnpm --filter @horizonpay/invoice-ai-cli run docs",
+    "changeset": "changeset",
+    "version-packages": "changeset version && node scripts/release/sync-versions.mjs && node scripts/ci/check-versions.mjs",
+    "release": "pnpm build && bash scripts/ci/pack-smoke.sh node && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.0",
+    "@changesets/changelog-github": "^0.5.1",
+    "@types/node": "^20",
+    "tsx": "^4.23.13",
+    "typescript": "^5"
+  }
+}

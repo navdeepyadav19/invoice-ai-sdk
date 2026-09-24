@@ -16,7 +16,7 @@ import pytest
 
 from invoice_ai import API_VERSION, OPERATIONS, AsyncInvoiceAI, InvoiceAI, __version__
 
-SPEC_PATH = Path(__file__).resolve().parents[3] / "api-docs" / "openapi.json"
+SPEC_PATH = Path(__file__).resolve().parents[3] / "spec" / "openapi.json"
 SPEC: Dict[str, Any] = json.loads(SPEC_PATH.read_text())
 SPEC_OPS: List[Dict[str, str]] = [
     {"operation_id": op["operationId"], "http_method": m.upper(), "path": path}

@@ -4,7 +4,7 @@
  *   INVOICE_AI_API_KEY=inv_live_… npx tsx examples/create-and-send-invoice.ts
  *
  * Point INVOICE_AI_BASE_URL at a Prism mock or a local server to try it safely:
- *   npx @stoplight/prism-cli mock ../../api-docs/openapi.json
+ *   npx @stoplight/prism-cli mock ../../spec/openapi.json
  *   INVOICE_AI_API_KEY=inv_live_test_x INVOICE_AI_BASE_URL=http://127.0.0.1:4010 npx tsx examples/create-and-send-invoice.ts
  */
 import InvoiceAI, { InvalidStateError, ValidationError, formatMoney, toMinor } from '@horizonpay/invoice-ai'

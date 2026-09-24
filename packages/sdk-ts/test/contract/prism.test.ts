@@ -1,5 +1,5 @@
 /**
- * Contract test: every SDK method against a Prism mock of api-docs/openapi.json.
+ * Contract test: every SDK method against a Prism mock of spec/openapi.json.
  *
  *   pnpm --filter @horizonpay/invoice-ai test:contract
  *
@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { InvoiceAI, OPERATIONS, Page, type OperationId } from '../../src/index'
 
-const SPEC = fileURLToPath(new URL('../../../../api-docs/openapi.json', import.meta.url))
+const SPEC = fileURLToPath(new URL('../../../../spec/openapi.json', import.meta.url))
 const KEY = 'inv_live_ab12cd34_contractTestKey'
 
 let prism: ChildProcess | undefined

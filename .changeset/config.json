@@ -1,0 +1,10 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3/schema.json",
+  "changelog": ["@changesets/changelog-github", { "repo": "navdeepyadav19/invoice-ai-sdk" }],
+  "commit": false,
+  "fixed": [["@horizonpay/invoice-ai", "@horizonpay/invoice-ai-cli"]],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": []
+}

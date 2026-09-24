@@ -1,5 +1,5 @@
 /**
- * Reads api-docs/openapi.json into a language-neutral list of SDK operations.
+ * Reads spec/openapi.json into a language-neutral list of SDK operations.
  * Shared by every SDK generator (ts.ts, python.ts), so all SDKs
  * agree on resource names, method names and response shapes.
  *

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Writes api-docs/cli/commands.mdx from the built CLI's own `--help` output,
+ * Writes docs/cli-commands.mdx from the built CLI's own `--help` output,
  * so the command reference can't drift from the code.
  *
  *   pnpm cli:docs            (from the repo root: builds SDK + CLI, then runs this)
@@ -11,7 +11,7 @@ import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const BIN = fileURLToPath(new URL('../dist/index.js', import.meta.url))
-const OUT = fileURLToPath(new URL('../../../api-docs/cli/commands.mdx', import.meta.url))
+const OUT = fileURLToPath(new URL('../../../docs/cli-commands.mdx', import.meta.url))
 
 function help(path) {
   return execFileSync(process.execPath, [BIN, ...path, '--help'], {

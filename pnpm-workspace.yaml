@@ -1,0 +1,6 @@
+packages:
+  - 'packages/*'
+
+allowBuilds:
+  # tsx (used by `pnpm sdk:gen`) runs on esbuild, which needs its postinstall.
+  esbuild: true

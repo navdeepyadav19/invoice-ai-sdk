@@ -44,7 +44,7 @@ describe('configuration', () => {
 
   it('VERSION matches package.json and API_VERSION comes from the spec', () => {
     const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }
-    const spec = JSON.parse(readFileSync(new URL('../../../api-docs/openapi.json', import.meta.url), 'utf8')) as {
+    const spec = JSON.parse(readFileSync(new URL('../../../spec/openapi.json', import.meta.url), 'utf8')) as {
       info: { version: string }
     }
     expect(VERSION).toBe(pkg.version)

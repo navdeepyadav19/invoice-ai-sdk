@@ -1,0 +1,20 @@
+name: Setup project
+description: Install pnpm, Node.js and dependencies. Shared by every CI and deploy job.
+
+runs:
+  using: composite
+  steps:
+    # No version input: pnpm/action-setup reads "packageManager" from package.json,
+    # so CI always uses the exact pnpm the lockfile was written with.
+    - uses: pnpm/action-setup@v6
+
+    - uses: actions/setup-node@v7
+      with:
+        node-version: 24 # Matches the Node.js 24.x runtime the Vercel project uses.
+        cache: pnpm
+
+    # --frozen-lockfile fails the job if package.json and pnpm-lock.yaml disagree,
+    # instead of silently resolving different versions than a developer tested.
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile

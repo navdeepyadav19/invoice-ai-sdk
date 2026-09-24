@@ -1,0 +1,199 @@
+# CI for the Invoice-AI SDKs and CLI. Runs on every pull request and on main.
+# The spec in spec/openapi.json is the single input: every job regenerates or
+# tests against it, so a stale SDK can't be merged.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sdk-ts:
+    name: TypeScript SDK (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22, 24]
+    steps:
+      - uses: actions/checkout@v7
+      # pnpm 11 itself needs Node 22+, so install, generate and build on the
+      # repo's Node (24) first, then switch to the matrix version to test.
+      - uses: ./.github/actions/setup
+      - run: pnpm sdk:gen
+      - name: Fail if the generated SDK drifted
+        run: |
+          if ! git diff --exit-code -- packages/sdk-ts/src; then
+            echo "::error::The TypeScript SDK is stale. Run 'pnpm sdk:gen' and commit the result."
+            exit 1
+          fi
+          untracked=$(git ls-files --others --exclude-standard -- packages/sdk-ts/src)
+          if [ -n "$untracked" ]; then
+            echo "::error::Generated SDK files are not committed: $untracked"
+            exit 1
+          fi
+      - run: pnpm --filter @horizonpay/invoice-ai typecheck
+      - run: pnpm --filter @horizonpay/invoice-ai build
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Unit tests
+        working-directory: packages/sdk-ts
+        run: ./node_modules/.bin/vitest run
+      - name: Smoke-test the built package (CJS + ESM)
+        working-directory: packages/sdk-ts
+        run: |
+          node -e "const m = require('./dist/index.cjs'); if (typeof m.InvoiceAI !== 'function') process.exit(1)"
+          node --input-type=module -e "const m = await import('./dist/index.js'); if (typeof m.default !== 'function') process.exit(1)"
+      # Every SDK method against a Prism mock of the spec. Skips itself if
+      # Prism can't be downloaded, so it never blocks on a registry outage.
+      - name: Contract tests (Prism)
+        if: matrix.node == 22
+        working-directory: packages/sdk-ts
+        run: ./node_modules/.bin/vitest run --config vitest.contract.config.ts
+
+  # packages/cli (@horizonpay/invoice-ai-cli, binary `invoice-ai`). It imports
+  # the built SDK, so build the SDK first, then the CLI. Unit and --help
+  # snapshot tests run on every supported Node; the built binary is smoke-tested
+  # and, on Node 22, run end to end against a Prism mock of the spec (skips
+  # itself if Prism can't be downloaded).
+  cli:
+    name: CLI (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22, 24]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: pnpm --filter @horizonpay/invoice-ai build
+      - run: pnpm --filter @horizonpay/invoice-ai-cli typecheck
+      - run: pnpm --filter @horizonpay/invoice-ai-cli build
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Unit and snapshot tests
+        working-directory: packages/cli
+        run: ./node_modules/.bin/vitest run
+      - name: Smoke-test the built binary
+        working-directory: packages/cli
+        env:
+          INVOICE_AI_NO_UPDATE_CHECK: '1'
+        run: |
+          node dist/index.js --help > /dev/null
+          node dist/index.js --version
+          node dist/index.js invoices --help > /dev/null
+          # No credentials must exit 3 (auth), not crash.
+          set +e; node dist/index.js customers list; code=$?; set -e
+          if [ "$code" -ne 3 ]; then echo "::error::expected exit 3 without credentials, got $code"; exit 1; fi
+      - name: End-to-end tests (Prism)
+        if: matrix.node == 22
+        working-directory: packages/cli
+        run: ./node_modules/.bin/vitest run --config vitest.e2e.config.ts
+
+  # packages/sdk-python (horizonpay-invoice-ai). Lint, type-check and unit-test on
+  # every Python version the package supports. On one version, also regenerate
+  # the SDK from spec/openapi.json (resources through scripts/sdk-gen/python.ts,
+  # models through datamodel-code-generator) and fail on any diff, and run every
+  # method against a Prism mock of the spec.
+  sdk-python:
+    name: Python SDK (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+          cache-dependency-glob: packages/sdk-python/uv.lock
+      - name: Install
+        working-directory: packages/sdk-python
+        run: uv sync --locked
+      - name: Lint
+        working-directory: packages/sdk-python
+        run: uv run ruff check
+      - name: Type-check
+        working-directory: packages/sdk-python
+        run: uv run mypy invoice_ai
+      - name: Unit tests
+        working-directory: packages/sdk-python
+        run: uv run pytest
+      - if: matrix.python == '3.13'
+        uses: ./.github/actions/setup
+      - name: Regenerate the SDK
+        if: matrix.python == '3.13'
+        run: pnpm sdk:gen
+      - name: Fail if the generated SDK drifted
+        if: matrix.python == '3.13'
+        run: |
+          if ! git diff --exit-code -- packages/sdk-python; then
+            echo "::error::The Python SDK is stale. Run 'pnpm sdk:gen' and commit the result."
+            exit 1
+          fi
+          untracked=$(git ls-files --others --exclude-standard -- packages/sdk-python)
+          if [ -n "$untracked" ]; then
+            echo "::error::Generated SDK files are not committed: $untracked"
+            exit 1
+          fi
+      # Skips itself if Prism can't be downloaded, so it never blocks on a registry outage.
+      - name: Contract tests (Prism)
+        if: matrix.python == '3.13'
+        working-directory: packages/sdk-python
+        run: uv run pytest -m contract
+
+  # The three packages ship as one release at one version. Fail if the TS SDK,
+  # its VERSION constant, the CLI, its CLI_VERSION constant and the Python SDK
+  # (_version.py, and pyproject.toml unless its version is dynamic) disagree.
+  versions:
+    name: Package versions in sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: node scripts/ci/check-versions.mjs
+
+  # Install what we would publish, the way a user would: pnpm pack the SDK and
+  # the CLI (pnpm rewrites the CLI's workspace: dependency on the SDK to a real
+  # range; fail if it didn't), npm install both tarballs into a blank project,
+  # then ESM default + named import, CJS require, `npx invoice-ai --help` and
+  # `--version`, publint and @arethetypeswrong/cli. For Python: uv build, twine
+  # check, and install the wheel and the sdist into fresh venvs and import them.
+  # The logic lives in scripts/ci/pack-smoke.sh so it runs the same locally.
+  packages-install:
+    name: Package install smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: '3.13'
+          enable-cache: true
+          cache-dependency-glob: packages/sdk-python/uv.lock
+      - name: npm packages (SDK + CLI)
+        run: scripts/ci/pack-smoke.sh node
+      - name: Python package
+        env:
+          PACK_SMOKE_PYTHON: '3.13'
+        run: scripts/ci/pack-smoke.sh python

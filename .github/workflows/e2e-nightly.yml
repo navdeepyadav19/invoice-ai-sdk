@@ -1,0 +1,116 @@
+# Live end-to-end: the full invoice lifecycle through the TypeScript SDK, the
+# Python SDK and the CLI, against the real API with the QA account's key.
+#
+#   customer → product + USD price → invoice → finalize → send (to
+#   delivered@resend.dev, Resend's test inbox) → pay; a second invoice →
+#   finalize → void; then archive the price, product and customer.
+#
+# Opt-in and never on pull requests: it writes real (archived afterwards) data
+# and sends a real email. Runs nightly, on demand, and can be called from a
+# release workflow (workflow_call). If the INVOICE_AI_E2E_KEY secret is not
+# set, every job skips with a notice instead of failing.
+#
+# The scripts live in scripts/e2e/ and run the same locally:
+#   INVOICE_AI_E2E_KEY=inv_live_… pnpm exec tsx scripts/e2e/lifecycle.ts
+
+name: E2E (live)
+
+on:
+  schedule:
+    - cron: '17 3 * * *' # 03:17 UTC daily
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: API base URL (empty = production)
+        required: false
+        default: ''
+  workflow_call:
+    inputs:
+      base_url:
+        type: string
+        required: false
+        default: ''
+    secrets:
+      INVOICE_AI_E2E_KEY:
+        required: false
+
+permissions:
+  contents: read
+
+# One live run at a time; a second trigger waits rather than overlapping.
+concurrency:
+  group: e2e-live
+  cancel-in-progress: false
+
+env:
+  INVOICE_AI_BASE_URL: ${{ inputs.base_url || vars.INVOICE_AI_E2E_BASE_URL || '' }}
+
+jobs:
+  gate:
+    name: Check for the E2E key
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - id: check
+        env:
+          KEY: ${{ secrets.INVOICE_AI_E2E_KEY }}
+        run: |
+          if [ -n "$KEY" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::INVOICE_AI_E2E_KEY is not set; skipping the live E2E suite."
+          fi
+
+  typescript:
+    name: TypeScript SDK lifecycle
+    needs: gate
+    if: needs.gate.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - name: Lifecycle
+        env:
+          INVOICE_AI_E2E_KEY: ${{ secrets.INVOICE_AI_E2E_KEY }}
+        run: pnpm exec tsx scripts/e2e/lifecycle.ts
+
+  python:
+    name: Python SDK lifecycle
+    needs: gate
+    if: needs.gate.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: '3.13'
+          enable-cache: true
+          cache-dependency-glob: packages/sdk-python/uv.lock
+      - name: Install
+        working-directory: packages/sdk-python
+        run: uv sync --locked
+      - name: Lifecycle
+        env:
+          INVOICE_AI_E2E_KEY: ${{ secrets.INVOICE_AI_E2E_KEY }}
+        run: uv run --project packages/sdk-python python scripts/e2e/lifecycle.py
+
+  cli:
+    name: CLI lifecycle
+    needs: gate
+    if: needs.gate.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: pnpm --filter @horizonpay/invoice-ai build
+      - run: pnpm --filter @horizonpay/invoice-ai-cli build
+      - name: Lifecycle
+        env:
+          INVOICE_AI_E2E_KEY: ${{ secrets.INVOICE_AI_E2E_KEY }}
+        run: scripts/e2e/lifecycle-cli.sh

@@ -1,0 +1,174 @@
+# Publishing. Two ways in:
+#
+# 1. Normal releases (push to main): Changesets opens a "Version Packages" PR
+#    from the pending .changeset/*.md files. Merging that PR publishes the new
+#    versions: npm (@horizonpay/invoice-ai, @horizonpay/invoice-ai-cli) with
+#    provenance, then PyPI (horizonpay-invoice-ai) via trusted publishing.
+#
+# 2. Rehearsal (Actions → Release → Run workflow, with a pre-release label such
+#    as `rc.0`): publishes the current version as e.g. 0.1.0-rc.0 under the npm
+#    `next` dist-tag and 0.1.0rc0 on PyPI, without committing anything.
+#
+# Nothing publishes until the repo variable RELEASES_ENABLED is set to "true",
+# so pushing this repo (or merging before the npm org exists) is always safe.
+#
+# npm auth: the NPM_TOKEN secret is only needed for the very first publish.
+# After that, configure npm trusted publishing for both packages and delete it.
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: Pre-release label for a rehearsal publish (e.g. rc.0). Publishes under the `next` dist-tag.
+        required: true
+        default: rc.0
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - id: check
+        run: |
+          if [ "${{ vars.RELEASES_ENABLED }}" = "true" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Releases are disabled. Set the repo variable RELEASES_ENABLED=true to publish."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  ci:
+    needs: gate
+    if: needs.gate.outputs.enabled == 'true'
+    uses: ./.github/workflows/ci.yml
+
+  # ── 1. Changesets: version PR, or publish what's been versioned ──────────
+  npm:
+    name: npm (Changesets)
+    needs: [gate, ci]
+    if: github.event_name == 'push' && needs.gate.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # push the version branch, create tags/releases
+      pull-requests: write  # open the "Version Packages" PR
+      id-token: write       # npm provenance / trusted publishing
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm version-packages
+          publish: pnpm release
+          title: Version Packages
+          commit: 'chore: version packages'
+          createGithubReleases: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+
+  pypi:
+    name: PyPI
+    needs: npm
+    if: needs.npm.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write       # PyPI trusted publishing (no token stored)
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+      - name: Build
+        working-directory: packages/sdk-python
+        run: uv build
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/sdk-python/dist
+
+  # ── 2. Rehearsal: publish X.Y.Z-<label> to `next` without committing ─────
+  rehearsal-npm:
+    name: Rehearsal (npm, next)
+    needs: [gate, ci]
+    if: github.event_name == 'workflow_dispatch' && needs.gate.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - id: version
+        name: Set pre-release version (not committed)
+        env:
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          if ! [[ "$PRERELEASE" =~ ^(alpha|beta|rc)\.[0-9]+$ ]]; then
+            echo "::error::prerelease must look like rc.0, beta.1 or alpha.2 (got '$PRERELEASE')"
+            exit 1
+          fi
+          base=$(node -p "require('./packages/sdk-ts/package.json').version.split('-')[0]")
+          version="$base-$PRERELEASE"
+          for pkg in packages/sdk-ts packages/cli; do
+            (cd "$pkg" && npm version "$version" --no-git-tag-version --allow-same-version >/dev/null)
+          done
+          node scripts/release/sync-versions.mjs
+          node scripts/ci/check-versions.mjs
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Build and smoke-test the tarballs
+        run: bash scripts/ci/pack-smoke.sh node
+      - name: Publish to npm (next)
+        run: pnpm -r --filter ./packages/sdk-ts --filter ./packages/cli publish --tag next --no-git-checks --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  rehearsal-pypi:
+    name: Rehearsal (PyPI)
+    needs: rehearsal-npm
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Set pre-release version (not committed)
+        env:
+          VERSION: ${{ needs.rehearsal-npm.outputs.version }}
+        run: |
+          for pkg in packages/sdk-ts packages/cli; do
+            (cd "$pkg" && npm version "$VERSION" --no-git-tag-version --allow-same-version >/dev/null)
+          done
+          node scripts/release/sync-versions.mjs
+      - uses: astral-sh/setup-uv@v10.2.0
+      - name: Build
+        working-directory: packages/sdk-python
+        run: uv build
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/sdk-python/dist

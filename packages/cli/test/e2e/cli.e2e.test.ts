@@ -1,6 +1,6 @@
 /**
  * End to end: the BUILT binary (dist/index.js), spawned with execa, against a
- * Prism mock of api-docs/openapi.json. Prism runs with --errors, so a request
+ * Prism mock of spec/openapi.json. Prism runs with --errors, so a request
  * the spec wouldn't accept fails the command instead of passing silently.
  *
  *   pnpm --filter @horizonpay/invoice-ai build
@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url'
 import { execa } from 'execa'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-const SPEC = fileURLToPath(new URL('../../../../api-docs/openapi.json', import.meta.url))
+const SPEC = fileURLToPath(new URL('../../../../spec/openapi.json', import.meta.url))
 const BIN = fileURLToPath(new URL('../../dist/index.js', import.meta.url))
 const KEY = 'inv_live_ab12cd34_e2eTestKey'
 

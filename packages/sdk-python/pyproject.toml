@@ -61,7 +61,7 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 # Contract tests start a Prism mock server; run them with `uv run pytest -m contract`.
 addopts = "-m 'not contract'"
-markers = ["contract: every SDK method against a Prism mock of api-docs/openapi.json"]
+markers = ["contract: every SDK method against a Prism mock of spec/openapi.json"]
 
 [tool.ruff]
 line-length = 120

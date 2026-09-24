@@ -1,6 +1,6 @@
 """
 Contract test: every SDK method (sync and async) against a Prism mock of
-api-docs/openapi.json.
+spec/openapi.json.
 
     uv run pytest -m contract
 
@@ -31,7 +31,7 @@ from invoice_ai._models import BaseModel
 
 pytestmark = pytest.mark.contract
 
-SPEC = Path(__file__).resolve().parents[4] / "api-docs" / "openapi.json"
+SPEC = Path(__file__).resolve().parents[4] / "spec" / "openapi.json"
 KEY = "inv_live_ab12cd34_contractTestKey"
 
 CUS = "cus_Nf3kQ8pR2mX7vB1cT9wL4sZ6"

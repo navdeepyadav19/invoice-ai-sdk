@@ -31,7 +31,7 @@ def _codes(ts_source: str, set_name: str) -> set:
 
 
 def test_agrees_with_the_servers_table_in_lib_currency_ts() -> None:
-    source = (ROOT / "lib" / "currency.ts").read_text()
+    source = (ROOT / "spec" / "currency.ts").read_text()
     zero, three = _codes(source, "ZERO_DECIMAL"), _codes(source, "THREE_DECIMAL")
     assert zero and three
     for code in zero:

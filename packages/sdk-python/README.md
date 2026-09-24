@@ -96,7 +96,7 @@ For runnable scripts, see [`examples/`](https://github.com/navdeepyadav19/invoic
 
 ## Development
 
-The spec is the source of truth. After changing `api-docs/openapi.json`, run `pnpm sdk:gen` from the repo root. It regenerates `invoice_ai/resources/`, `invoice_ai/types/`, `_operations.py` and `_meta.py`; don't edit those by hand.
+The spec is the source of truth. After changing `spec/openapi.json`, run `pnpm sdk:gen` from the repo root. It regenerates `invoice_ai/resources/`, `invoice_ai/types/`, `_operations.py` and `_meta.py`; don't edit those by hand.
 
 ```sh
 uv sync

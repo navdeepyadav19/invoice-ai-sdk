@@ -8,7 +8,7 @@ import { InvoiceAI, OPERATIONS } from '../src/index'
  * `invoiceai.<resource>.<method>`. If this fails after a spec change, run
  * `pnpm sdk:gen` and commit the result.
  */
-const specPath = fileURLToPath(new URL('../../../api-docs/openapi.json', import.meta.url))
+const specPath = fileURLToPath(new URL('../../../spec/openapi.json', import.meta.url))
 const spec = JSON.parse(readFileSync(specPath, 'utf8')) as {
   info: { version: string }
   paths: Record<string, Record<string, { operationId?: string }>>

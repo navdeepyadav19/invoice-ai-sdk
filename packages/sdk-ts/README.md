@@ -60,7 +60,7 @@ For runnable scripts, see [`examples/`](https://github.com/navdeepyadav19/invoic
 
 ## Development
 
-The spec is the source of truth. After changing `api-docs/openapi.json`, run `pnpm sdk:gen` from the repo root. It regenerates `src/generated/` and `src/resources/`; don't edit those by hand.
+The spec is the source of truth. After changing `spec/openapi.json`, run `pnpm sdk:gen` from the repo root. It regenerates `src/generated/` and `src/resources/`; don't edit those by hand.
 
 ```sh
 pnpm --filter @horizonpay/invoice-ai test           # unit tests

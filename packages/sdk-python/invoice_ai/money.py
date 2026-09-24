@@ -2,7 +2,7 @@
 Money helpers. Every amount on the wire is an integer in the currency's
 smallest unit (Stripe-style): 2500 is $25.00, 2500 is ¥2,500, 2500 is
 KWD 2.500. These helpers convert with each currency's ISO 4217 exponent — the
-same table the server uses (lib/currency.ts) — using ``Decimal``, never float
+same table the server uses (spec/currency.ts, vendored from the API repo's lib/currency.ts) — using ``Decimal``, never float
 multiplication.
 """
 
