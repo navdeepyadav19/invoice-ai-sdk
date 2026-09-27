@@ -1,0 +1,87 @@
+# Pulls the API contract from the (public) API repo and opens a PR here when it
+# changed: spec/openapi.json and spec/currency.ts, plus both SDKs regenerated.
+#
+# Runs every 6 hours and on demand. Pulling (rather than the API repo pushing)
+# means no cross-repo token exists anywhere: this uses only its own GITHUB_TOKEN.
+# PRs opened with GITHUB_TOKEN don't trigger CI on their own, so the PR body
+# asks the reviewer to close/reopen it, which runs the full CI (drift checks,
+# contract tests, install smoke) before anyone can merge.
+name: Sync spec
+
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-spec
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Download the API contract
+        run: |
+          base=https://raw.githubusercontent.com/navdeepyadav19/invoice-ai/main
+          curl -fsSL "$base/api-docs/openapi.json" -o spec/openapi.json
+          curl -fsSL "$base/lib/currency.ts" -o spec/currency.ts
+      - id: diff
+        run: |
+          if git diff --quiet -- spec; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::spec/ is already up to date."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.diff.outputs.changed == 'true'
+        uses: ./.github/actions/setup
+      - if: steps.diff.outputs.changed == 'true'
+        uses: astral-sh/setup-uv@v10.2.0
+      - name: Regenerate both SDKs
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          (cd packages/sdk-python && uv sync --locked)
+          pnpm sdk:gen
+      - if: steps.diff.outputs.changed == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: synced
+          path: |
+            spec/
+            packages/sdk-ts/src/generated/
+            packages/sdk-ts/src/resources/
+            packages/sdk-python/invoice_ai/
+          retention-days: 1
+
+  pr:
+    needs: fetch
+    if: needs.fetch.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: synced
+      - id: version
+        run: echo "version=$(node -p "require('./spec/openapi.json').info.version")" >> "$GITHUB_OUTPUT"
+      - uses: peter-evans/create-pull-request@v8
+        with:
+          branch: sync/spec
+          delete-branch: true
+          commit-message: 'chore(spec): sync API spec ${{ steps.version.outputs.version }}'
+          title: 'Sync API spec (${{ steps.version.outputs.version }})'
+          body: |
+            Automated pull of `api-docs/openapi.json` and `lib/currency.ts` from navdeepyadav19/invoice-ai, with both SDKs regenerated (`pnpm sdk:gen`).
+
+            PRs opened by Actions don't start CI automatically: close and reopen this PR (or push to it) to run the checks before merging.
+            If this changes the public SDK surface, add a changeset (`pnpm changeset`).
