@@ -39,7 +39,7 @@ class InvoiceItems(SyncAPIResource):
         """
         List invoice items.
 
-        Returns every line of one invoice, in order (not paginated). `invoice` is required.
+        Returns every line of one invoice, in order. `invoice` is required; the result is not paginated.
 
         `GET /invoice-items` · scope `invoices:read`
 
@@ -79,7 +79,7 @@ class InvoiceItems(SyncAPIResource):
         """
         Add an invoice item.
 
-        Appends one line to a draft: either a `price`, or `description` + `unit_amount`. Totals are recomputed, so the response is the whole invoice; every line gets a new id. Finalized invoices return `409`. Emits `invoice.updated`.
+        Appends a line to a draft: a `price`, or `description` + `unit_amount`. Returns the whole recomputed invoice; every line gets a new id. Finalized invoices return `409`. Emits `invoice.updated`.
 
         `POST /invoice-items` · scope `invoices:write` · idempotent (automatic key)
 
@@ -120,7 +120,7 @@ class InvoiceItems(SyncAPIResource):
         """
         Retrieve an invoice item.
 
-        Returns one line by `ii_…` id or UUID, from any of your invoices.
+        Returns one invoice line by `ii_…` id or UUID.
 
         `GET /invoice-items/{id}` · scope `invoices:read`
         """
@@ -151,7 +151,7 @@ class InvoiceItems(SyncAPIResource):
         """
         Remove an invoice item.
 
-        Removes one line from a draft and returns the whole recomputed invoice. A draft always keeps at least one line (`409` for the last one); finalized invoices return `409`. Pass `invoice` to scope the lookup to one invoice. Emits `invoice.updated`.
+        Removes a line from a draft and returns the recomputed invoice. A draft keeps at least one line, and finalized invoices are frozen — both `409`. Pass `invoice` to speed up the lookup. Emits `invoice.updated`.
 
         `DELETE /invoice-items/{id}` · scope `invoices:write`
 
@@ -194,7 +194,7 @@ class AsyncInvoiceItems(AsyncAPIResource):
         """
         List invoice items.
 
-        Returns every line of one invoice, in order (not paginated). `invoice` is required.
+        Returns every line of one invoice, in order. `invoice` is required; the result is not paginated.
 
         `GET /invoice-items` · scope `invoices:read`
 
@@ -234,7 +234,7 @@ class AsyncInvoiceItems(AsyncAPIResource):
         """
         Add an invoice item.
 
-        Appends one line to a draft: either a `price`, or `description` + `unit_amount`. Totals are recomputed, so the response is the whole invoice; every line gets a new id. Finalized invoices return `409`. Emits `invoice.updated`.
+        Appends a line to a draft: a `price`, or `description` + `unit_amount`. Returns the whole recomputed invoice; every line gets a new id. Finalized invoices return `409`. Emits `invoice.updated`.
 
         `POST /invoice-items` · scope `invoices:write` · idempotent (automatic key)
 
@@ -275,7 +275,7 @@ class AsyncInvoiceItems(AsyncAPIResource):
         """
         Retrieve an invoice item.
 
-        Returns one line by `ii_…` id or UUID, from any of your invoices.
+        Returns one invoice line by `ii_…` id or UUID.
 
         `GET /invoice-items/{id}` · scope `invoices:read`
         """
@@ -306,7 +306,7 @@ class AsyncInvoiceItems(AsyncAPIResource):
         """
         Remove an invoice item.
 
-        Removes one line from a draft and returns the whole recomputed invoice. A draft always keeps at least one line (`409` for the last one); finalized invoices return `409`. Pass `invoice` to scope the lookup to one invoice. Emits `invoice.updated`.
+        Removes a line from a draft and returns the recomputed invoice. A draft keeps at least one line, and finalized invoices are frozen — both `409`. Pass `invoice` to speed up the lookup. Emits `invoice.updated`.
 
         `DELETE /invoice-items/{id}` · scope `invoices:write`
 

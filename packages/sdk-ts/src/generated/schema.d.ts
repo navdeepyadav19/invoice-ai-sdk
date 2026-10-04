@@ -13,7 +13,7 @@ export interface paths {
         };
         /**
          * Retrieve the business profile
-         * @description Returns the business profile invoices are issued from: legal name, address, tax id, default currency, bank details and invoice prefix. Read-only — the profile is edited in the app.
+         * @description Returns your business profile — the issuer printed on every invoice: legal name, address, tax id, default currency, bank details and invoice prefix. Read-only over the API; edit it in Settings.
          *
          *     **Scope:** `business:read`
          */
@@ -35,7 +35,7 @@ export interface paths {
         };
         /**
          * List customers
-         * @description Returns customers newest first, cursor-paginated. Archived customers are excluded unless `include_deleted=true`.
+         * @description Lists customers, newest first. Archived customers are left out unless `include_deleted=true`.
          *
          *     **Scope:** `clients:read`
          */
@@ -43,11 +43,11 @@ export interface paths {
         put?: never;
         /**
          * Create a customer
-         * @description Creates a customer you can bill. Only `name` is required. Creating does not deduplicate — two calls with the same name make two customers.
+         * @description Creates a customer to bill. Only `name` is required. Calls are not deduplicated: the same name twice makes two customers.
          *
          *     **Scope:** `clients:write`
          *
-         *     **Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
+         *     **Idempotency:** `Idempotency-Key` optional. With one, a retry with the same key and body replays the first response (`Idempotent-Replayed: true`); the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["createCustomer"];
         delete?: never;
@@ -65,7 +65,7 @@ export interface paths {
         };
         /**
          * Retrieve a customer
-         * @description Returns one customer by `cus_…` id or UUID, including archived ones (`deleted: true`).
+         * @description Returns a customer by `cus_…` id or UUID, including archived ones (`deleted: true`).
          *
          *     **Scope:** `clients:read`
          */
@@ -74,7 +74,7 @@ export interface paths {
         post?: never;
         /**
          * Archive a customer
-         * @description Archives the customer (`deleted: true`) instead of deleting it: issued invoices reference customers and must keep naming who they were billed to. Archived customers drop out of `GET /customers` but stay readable by id. Archiving an archived customer succeeds and changes nothing.
+         * @description Archives a customer (`deleted: true`). Customers are never hard-deleted, because issued invoices must keep naming who they billed. Archived customers drop out of `GET /customers` but stay readable by id; archiving twice changes nothing.
          *
          *     **Scope:** `clients:write`
          */
@@ -83,7 +83,7 @@ export interface paths {
         head?: never;
         /**
          * Update a customer
-         * @description Updates the fields you send and leaves the rest unchanged. Existing invoices are not affected — each invoice keeps a snapshot of the customer as billed. Naturally idempotent, so no `Idempotency-Key` is needed.
+         * @description Updates the fields you send and leaves the rest unchanged. Issued invoices keep the customer details they were billed with. No `Idempotency-Key` needed — repeating the call is harmless.
          *
          *     **Scope:** `clients:write`
          */
@@ -99,7 +99,7 @@ export interface paths {
         };
         /**
          * List products
-         * @description Returns products newest first, cursor-paginated. Archived products are included unless you filter with `active`.
+         * @description Lists products, newest first. Archived products are included unless you filter with `active`.
          *
          *     **Scope:** `products:read`
          */
@@ -107,11 +107,11 @@ export interface paths {
         put?: never;
         /**
          * Create a product
-         * @description Creates a product. Add one or more prices to it with `POST /prices` before billing it.
+         * @description Creates a product. Amounts live on prices: add one with `POST /prices` before billing it.
          *
          *     **Scope:** `products:write`
          *
-         *     **Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
+         *     **Idempotency:** `Idempotency-Key` optional. With one, a retry with the same key and body replays the first response (`Idempotent-Replayed: true`); the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["createProduct"];
         delete?: never;
@@ -129,7 +129,7 @@ export interface paths {
         };
         /**
          * Retrieve a product
-         * @description Returns one product by `prod_…` id or UUID, whether active or archived.
+         * @description Returns a product by `prod_…` id or UUID, active or archived.
          *
          *     **Scope:** `products:read`
          */
@@ -138,7 +138,7 @@ export interface paths {
         post?: never;
         /**
          * Archive a product
-         * @description Sets `active: false`. The product is not deleted — its prices and the invoice lines that reference it stay intact. Archiving an archived product succeeds and changes nothing. Restore with `PATCH` and `active: true`.
+         * @description Archives a product (`active: false`). Its prices and the invoice lines that use it stay intact; archiving twice changes nothing. Restore with `PATCH` and `active: true`.
          *
          *     **Scope:** `products:write`
          */
@@ -147,7 +147,7 @@ export interface paths {
         head?: never;
         /**
          * Update a product
-         * @description Updates the fields you send and leaves the rest unchanged — omitted fields are never reset to defaults. Send `active: true` to restore an archived product. Finalized invoices keep the line descriptions they were issued with.
+         * @description Updates the fields you send and leaves the rest unchanged. Send `active: true` to restore an archived product. Finalized invoices keep the line descriptions they were issued with.
          *
          *     **Scope:** `products:write`
          */
@@ -163,7 +163,7 @@ export interface paths {
         };
         /**
          * List prices
-         * @description Returns prices newest first, cursor-paginated, optionally filtered by product, active flag, currency or type. An unknown `product` is a `404`, not an empty page.
+         * @description Lists prices, newest first, optionally filtered by `product`, `active`, `currency` or `type`. An unknown `product` is a `404`, not an empty page.
          *
          *     **Scope:** `products:read`
          */
@@ -171,11 +171,11 @@ export interface paths {
         put?: never;
         /**
          * Create a price
-         * @description Adds a price to a product. `unit_amount` is integer minor units. A `recurring` price needs `recurring.interval`; it is stored for reporting — nothing auto-bills yet.
+         * @description Adds a price to a product. `unit_amount` is in integer minor units. A `recurring` price needs `recurring.interval`; it is stored for reporting — nothing auto-bills yet.
          *
          *     **Scope:** `products:write`
          *
-         *     **Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
+         *     **Idempotency:** `Idempotency-Key` optional. With one, a retry with the same key and body replays the first response (`Idempotent-Replayed: true`); the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["createPrice"];
         delete?: never;
@@ -193,7 +193,7 @@ export interface paths {
         };
         /**
          * Retrieve a price
-         * @description Returns one price by `price_…` id or UUID, whether active or archived.
+         * @description Returns a price by `price_…` id or UUID, active or archived.
          *
          *     **Scope:** `products:read`
          */
@@ -202,7 +202,7 @@ export interface paths {
         post?: never;
         /**
          * Archive a price
-         * @description Sets `active: false`. The price is not deleted, because invoice lines may reference it. Archiving an archived price succeeds and changes nothing. Restore with `PATCH` and `active: true`.
+         * @description Archives a price (`active: false`). It is kept because invoice lines may reference it; archiving twice changes nothing. Restore with `PATCH` and `active: true`.
          *
          *     **Scope:** `products:write`
          */
@@ -211,7 +211,7 @@ export interface paths {
         head?: never;
         /**
          * Update a price
-         * @description Updates the fields you send and leaves the rest unchanged. The parent product cannot change — sending `product` is a `422`; create a new price instead. Lines on finalized invoices keep the amount they were billed at; a draft with a line from this price picks up the change the next time it is saved.
+         * @description Updates the fields you send and leaves the rest unchanged. A price cannot move to another product (`422`) — create a new price instead. Finalized invoices keep the amount they were billed at; a draft picks up the change the next time it is saved.
          *
          *     **Scope:** `products:write`
          */
@@ -227,7 +227,7 @@ export interface paths {
         };
         /**
          * List invoices
-         * @description Returns invoices newest first, cursor-paginated, without `lines`. `status=overdue` selects open invoices whose `due_date` is before today (UTC); `status=open` returns every open invoice, overdue ones included. An unknown `customer` is a `404`.
+         * @description Lists invoices, newest first, without `lines`. `status=overdue` returns open invoices whose `due_date` is before today (UTC); `status=open` includes them. An unknown `customer` filter is a `404`.
          *
          *     **Scope:** `invoices:read` + `clients:read` (when filtering by `customer`)
          */
@@ -235,13 +235,13 @@ export interface paths {
         put?: never;
         /**
          * Create a draft invoice
-         * @description Creates a `draft` for an existing customer. Each line is either a catalog `price` (description, amount and tax rate are borrowed from it) or an ad-hoc `description` + `unit_amount`. Totals are always computed server-side from the lines. The issue date is today; `currency` defaults to your business currency.
+         * @description Creates a `draft` invoice for an existing customer. Each line is either a catalog `price` (its name, amount and tax rate fill in) or an ad-hoc `description` + `unit_amount`. Totals are computed server-side; `currency` defaults to your business currency.
          *
-         *     A draft has no number yet — call `POST /invoices/{id}/finalize` (or `/send`) to issue it. Emits `invoice.created`.
+         *     A draft has no number until you finalize or send it. Emits `invoice.created`.
          *
          *     **Scope:** `invoices:write` + `business:read` + `clients:read`
          *
-         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
+         *     **Idempotency:** `Idempotency-Key` **required** (`428` without it). A retry with the same key and body replays the first response (`Idempotent-Replayed: true`); the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["createInvoice"];
         delete?: never;
@@ -259,7 +259,7 @@ export interface paths {
         };
         /**
          * Retrieve an invoice
-         * @description Returns one invoice by `in_…` id or UUID, with its `lines`. `status` reflects `overdue` at the moment of reading.
+         * @description Returns an invoice by `in_…` id or UUID, with its `lines`. `status` reads `overdue` when an open invoice is past its due date.
          *
          *     **Scope:** `invoices:read`
          */
@@ -268,7 +268,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a draft invoice
-         * @description Permanently deletes a draft. A finalized invoice can never be deleted — its number belongs to a consecutive series, and a gap reads as a hidden sale. Void it instead.
+         * @description Permanently deletes a draft. A finalized invoice cannot be deleted (`409`) — its number belongs to a gap-free series. Void it instead.
          *
          *     **Scope:** `invoices:write`
          */
@@ -277,7 +277,7 @@ export interface paths {
         head?: never;
         /**
          * Update a draft invoice
-         * @description Drafts only. A partial update: send only the fields to change — omitted ones (`customer` included) keep their stored value, and `items`, when sent, replaces every line (omit it to keep them). Totals are recomputed and line ids change. Once finalized an invoice is frozen — the customer may already have the PDF — and this returns `409`. Emits `invoice.updated`.
+         * @description Updates a draft. Send only the fields to change; `items`, when sent, replaces every line (line ids change). Once finalized an invoice is frozen and this returns `409`. Emits `invoice.updated`.
          *
          *     **Scope:** `invoices:write` + `business:read` + `clients:read`
          */
@@ -295,11 +295,11 @@ export interface paths {
         put?: never;
         /**
          * Finalize an invoice
-         * @description Assigns the next permanent number in your series (e.g. `INV-0042`) and moves the draft to `open`. The draft must have at least one line. Finalizing an invoice that already has a number returns it unchanged with the same number — a retry can never burn a second one. Does not email the customer (see `/send`). Emits `invoice.finalized`.
+         * @description Issues a draft: assigns the next number in your series (e.g. `INV-0042`) and moves it to `open`. The draft needs at least one line. Finalizing an invoice that already has a number returns it unchanged, so a retry never spends a second number. Does not email the customer — see `/send`. Emits `invoice.finalized`.
          *
          *     **Scope:** `invoices:finalize`
          *
-         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
+         *     **Idempotency:** `Idempotency-Key` **required** (`428` without it). A retry with the same key and body replays the first response (`Idempotent-Replayed: true`); the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["finalizeInvoice"];
         delete?: never;
@@ -319,15 +319,17 @@ export interface paths {
         put?: never;
         /**
          * Send an invoice
-         * @description Emails the invoice PDF and a link to the public invoice page, via Resend, to `to` or else the customer email recorded on the invoice. A draft is finalized first (this scope covers that — `invoices:finalize` is not needed). Open and paid invoices can be re-sent; void ones cannot.
+         * @description Emails the invoice PDF and a link to its public page to `to`, or else the customer email on the invoice. A draft is finalized first (no `invoices:finalize` scope needed). Open and paid invoices can be re-sent; void ones cannot.
          *
-         *     **Rate limit:** 10 sends per hour per key — each send costs money and lands in a third party’s inbox.
+         *     **Requires a verified account email** — until then this returns `409` `invalid_state`.
          *
-         *     If the email fails after finalizing, the response is `502` and the number stays spent; retry the send. Emits `invoice.emailed` (or `invoice.email_failed`), plus `invoice.finalized` when it finalized.
+         *     **Rate limits:** 10 sends per hour per API key, and 50 per hour per account across every key and the dashboard (`429` `rate_limited`, with `Retry-After`).
+         *
+         *     If the email fails after finalizing, the response is `502` `upstream_failed` and the number stays spent; retry the send. Emits `invoice.emailed` (or `invoice.email_failed`), plus `invoice.finalized` when it finalized.
          *
          *     **Scope:** `invoices:send`
          *
-         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
+         *     **Idempotency:** `Idempotency-Key` **required** (`428` without it). A retry with the same key and body replays the first response (`Idempotent-Replayed: true`); the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["sendInvoice"];
         delete?: never;
@@ -347,11 +349,11 @@ export interface paths {
         put?: never;
         /**
          * Mark an invoice paid
-         * @description Records that an `open` (or overdue) invoice was paid outside Invoice-AI — no money moves. Drafts, void and already-paid invoices return `409`. Sets `paid_at` and `amount_due: 0`. The response omits `lines`. Emits `invoice.paid`, with `reference` in the event meta.
+         * @description Marks an `open` (or overdue) invoice paid outside Invoice-AI — no money moves. `paid_on` is an ISO 8601 date or timestamp (defaults to now); `reference` is up to 200 characters. Drafts, void and already-paid invoices return `409`. The response omits `lines`. Emits `invoice.paid`, with `reference` in its meta.
          *
          *     **Scope:** `payments:write`
          *
-         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
+         *     **Idempotency:** `Idempotency-Key` **required** (`428` without it). A retry with the same key and body replays the first response (`Idempotent-Replayed: true`); the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["payInvoice"];
         delete?: never;
@@ -371,11 +373,11 @@ export interface paths {
         put?: never;
         /**
          * Void an invoice
-         * @description Voids an `open` (or overdue) invoice with a reason. The number stays on the record — an auditor seeing 0041 then 0043 needs to find 0042 voided, not missing. A paid invoice cannot be voided (it needs a credit note); a draft should be deleted instead. The response omits `lines`. Emits `invoice.voided`.
+         * @description Voids an `open` (or overdue) invoice. `reason` is required, up to 500 characters. The number stays on record, so the series has no gaps. A paid invoice cannot be voided (it needs a credit note) and a draft should be deleted instead — both `409`. The response omits `lines`. Emits `invoice.voided`.
          *
          *     **Scope:** `invoices:finalize`
          *
-         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
+         *     **Idempotency:** `Idempotency-Key` **required** (`428` without it). A retry with the same key and body replays the first response (`Idempotent-Replayed: true`); the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["voidInvoice"];
         delete?: never;
@@ -393,7 +395,7 @@ export interface paths {
         };
         /**
          * Download an invoice PDF
-         * @description Returns the PDF bytes (not a link), rendered on demand from the current invoice, so it is always up to date. Works for drafts too (without a number). Served inline; pass `download=1` for `Content-Disposition: attachment`. Not cacheable (`Cache-Control: private, no-store`).
+         * @description Returns the PDF bytes (not a link), rendered on demand from the current invoice — drafts too, without a number. Served inline; pass `download=1` for `Content-Disposition: attachment`. Not cacheable.
          *
          *     **Scope:** `invoices:read`
          */
@@ -415,7 +417,7 @@ export interface paths {
         };
         /**
          * List invoice events
-         * @description Returns the history of one invoice, newest first, cursor-paginated: created, updated, finalized, emailed, viewed, downloaded, paid, voided. `invoice.viewed` and `invoice.downloaded` are recorded when the customer opens the public link — the way to tell they actually looked at it.
+         * @description Lists one invoice’s history, newest first: created, updated, finalized, emailed, viewed, downloaded, paid, voided. `invoice.viewed` and `invoice.downloaded` mean the customer opened the public link; each is recorded at most once per invoice every 10 minutes.
          *
          *     **Scope:** `invoices:read`
          */
@@ -437,7 +439,7 @@ export interface paths {
         };
         /**
          * List invoice items
-         * @description Returns every line of one invoice, in order (not paginated). `invoice` is required.
+         * @description Returns every line of one invoice, in order. `invoice` is required; the result is not paginated.
          *
          *     **Scope:** `invoices:read`
          */
@@ -445,11 +447,11 @@ export interface paths {
         put?: never;
         /**
          * Add an invoice item
-         * @description Appends one line to a draft: either a `price`, or `description` + `unit_amount`. Totals are recomputed, so the response is the whole invoice; every line gets a new id. Finalized invoices return `409`. Emits `invoice.updated`.
+         * @description Appends a line to a draft: a `price`, or `description` + `unit_amount`. Returns the whole recomputed invoice; every line gets a new id. Finalized invoices return `409`. Emits `invoice.updated`.
          *
          *     **Scope:** `invoices:write` + `business:read`
          *
-         *     **Idempotency:** `Idempotency-Key` header **required** (`428` without it). A retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
+         *     **Idempotency:** `Idempotency-Key` **required** (`428` without it). A retry with the same key and body replays the first response (`Idempotent-Replayed: true`); the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["createInvoiceItem"];
         delete?: never;
@@ -467,7 +469,7 @@ export interface paths {
         };
         /**
          * Retrieve an invoice item
-         * @description Returns one line by `ii_…` id or UUID, from any of your invoices.
+         * @description Returns one invoice line by `ii_…` id or UUID.
          *
          *     **Scope:** `invoices:read`
          */
@@ -476,7 +478,7 @@ export interface paths {
         post?: never;
         /**
          * Remove an invoice item
-         * @description Removes one line from a draft and returns the whole recomputed invoice. A draft always keeps at least one line (`409` for the last one); finalized invoices return `409`. Pass `invoice` to scope the lookup to one invoice. Emits `invoice.updated`.
+         * @description Removes a line from a draft and returns the recomputed invoice. A draft keeps at least one line, and finalized invoices are frozen — both `409`. Pass `invoice` to speed up the lookup. Emits `invoice.updated`.
          *
          *     **Scope:** `invoices:write` + `business:read`
          */
@@ -495,7 +497,7 @@ export interface paths {
         };
         /**
          * List webhook endpoints
-         * @description Returns your webhook endpoints, newest first, cursor-paginated. Signing secrets are never included — only once, at creation.
+         * @description Lists your webhook endpoints, newest first. Signing secrets are never included.
          *
          *     **Scope:** `webhooks:manage`
          */
@@ -503,11 +505,13 @@ export interface paths {
         put?: never;
         /**
          * Create a webhook endpoint
-         * @description Registers an https URL to receive events. The response carries the signing `secret` (`whsec_` + base64) — the only time it is returned, so store it. The URL must use https and must not resolve to a private, loopback or link-local address.
+         * @description Registers a URL to receive signed invoice events. The response carries the signing `secret` (`whsec_…`) — the only time it is returned, so store it.
+         *
+         *     **URL rules:** `https` only, at most 2048 characters, no username or password, and every address it resolves to must be public — private, loopback, link-local and IPv4-embedding IPv6 ranges (NAT64, 6to4, Teredo) are rejected. The check runs again at every delivery, and redirects are not followed.
          *
          *     **Scope:** `webhooks:manage`
          *
-         *     **Idempotency:** `Idempotency-Key` header optional. When sent, a retry with the same key and body replays the first response with `Idempotent-Replayed: true`; the same key with a different body is a `422` `idempotency_mismatch`.
+         *     **Idempotency:** `Idempotency-Key` optional. With one, a retry with the same key and body replays the first response (`Idempotent-Replayed: true`); the same key with a different body is a `422` `idempotency_mismatch`.
          */
         post: operations["createWebhookEndpoint"];
         delete?: never;
@@ -528,7 +532,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a webhook endpoint
-         * @description Permanently deletes the endpoint; no further deliveries are made to it. Deleting it again is a `404`, not a silent success — that usually means you are working from a stale list.
+         * @description Permanently deletes an endpoint; no further deliveries are made to it. Deleting it again is a `404`.
          *
          *     **Scope:** `webhooks:manage`
          */
@@ -874,19 +878,19 @@ export interface components {
         };
         InvoicePay: {
             /**
-             * @description When payment was received (ISO 8601 date or timestamp). Defaults to now.
+             * @description When payment was received: an ISO 8601 date or timestamp. Defaults to now.
              * @example 2026-09-29
              */
             paid_on?: string;
             /**
-             * @description Your payment reference (cheque number, bank transfer id). Recorded on the `invoice.paid` event.
+             * @description Your payment reference (cheque number, bank transfer id), up to 200 characters. Recorded on the `invoice.paid` event.
              * @example chk_123456
              */
             reference?: string;
         };
         InvoiceVoid: {
             /**
-             * @description Why the invoice is void. Required and non-blank; stored as `void_reason`.
+             * @description Why the invoice is void: required, non-blank, up to 500 characters. Stored as `void_reason`.
              * @example Raised against the wrong customer.
              */
             reason: string;
@@ -941,7 +945,7 @@ export interface components {
         };
         WebhookEndpointCreate: {
             /**
-             * @description An `https://` URL that does not resolve to a private, loopback or link-local address.
+             * @description An `https://` URL of up to 2048 characters, without a username or password, that resolves only to public addresses. Redirects are not followed.
              * @example https://example.com/webhooks/invoice-ai
              */
             url: string;
@@ -1484,7 +1488,7 @@ export interface components {
              */
             id: string;
             /**
-             * @description What happened. `invoice.viewed` and `invoice.downloaded` are recorded when the customer opens the public share link.
+             * @description What happened. `invoice.viewed` and `invoice.downloaded` are recorded when the customer opens the public share link, at most once per type per invoice every 10 minutes.
              * @example invoice.finalized
              * @enum {string}
              */
@@ -1520,12 +1524,12 @@ export interface components {
             url: string;
             /** @description Subscribed event types. An endpoint registered with no events receives every type, and lists them all here. */
             events: ("invoice.created" | "invoice.updated" | "invoice.finalized" | "invoice.emailed" | "invoice.email_failed" | "invoice.viewed" | "invoice.downloaded" | "invoice.paid" | "invoice.voided")[];
-            /** @description `false` once deliveries are disabled, which happens after 20 consecutive failures. */
+            /** @description `false` once deliveries are disabled: after 20 deliveries in a row used up every retry. A successful delivery resets the count. */
             active: boolean;
             /** @description When deliveries were disabled, or `null`. */
             disabled_at: string | null;
             /**
-             * @description Consecutive failed deliveries.
+             * @description Deliveries in a row that used up every retry. Resets to 0 on any successful delivery.
              * @example 0
              */
             failure_count: number;
@@ -3564,7 +3568,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description The invoice is void or has no lines, or the same Idempotency-Key is still running. Codes: `invalid_state`, `conflict`. */
+            /** @description The account email is not verified yet, the invoice is void or has no lines, or the same Idempotency-Key is still running. Codes: `invalid_state`, `conflict`. */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -3583,7 +3587,7 @@ export interface operations {
                 };
             };
             428: components["responses"]["IdempotencyKeyRequired"];
-            /** @description More than 10 sends in an hour for this key. Wait `Retry-After` seconds. Codes: `rate_limited`. */
+            /** @description More than 10 sends in an hour for this key, or 50 for the whole account (dashboard included). Wait `Retry-After` seconds. Codes: `rate_limited`. */
             429: {
                 headers: {
                     "Retry-After": components["headers"]["RetryAfter"];
@@ -4522,12 +4526,12 @@ export interface operations {
                             url: string;
                             /** @description Subscribed event types. An endpoint registered with no events receives every type, and lists them all here. */
                             events: ("invoice.created" | "invoice.updated" | "invoice.finalized" | "invoice.emailed" | "invoice.email_failed" | "invoice.viewed" | "invoice.downloaded" | "invoice.paid" | "invoice.voided")[];
-                            /** @description `false` once deliveries are disabled, which happens after 20 consecutive failures. */
+                            /** @description `false` once deliveries are disabled: after 20 deliveries in a row used up every retry. A successful delivery resets the count. */
                             active: boolean;
                             /** @description When deliveries were disabled, or `null`. */
                             disabled_at: string | null;
                             /**
-                             * @description Consecutive failed deliveries.
+                             * @description Deliveries in a row that used up every retry. Resets to 0 on any successful delivery.
                              * @example 0
                              */
                             failure_count: number;
@@ -4556,7 +4560,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description The URL is invalid, not https or private, or an event type is unknown. Codes: `validation`. */
+            /** @description The URL breaks a rule above (not https, too long, has credentials, or resolves to a non-public address), or an event type is unknown. Codes: `validation`. */
             422: {
                 headers: {
                     [name: string]: unknown;

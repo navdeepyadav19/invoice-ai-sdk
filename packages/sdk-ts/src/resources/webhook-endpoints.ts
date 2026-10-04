@@ -15,7 +15,7 @@ export type WebhookEndpointCreateResult = operations['createWebhookEndpoint']['r
 export class WebhookEndpoints extends APIResource {
   /**
    * List webhook endpoints.
-   * Returns your webhook endpoints, newest first, cursor-paginated. Signing secrets are never included — only once, at creation.
+   * Lists your webhook endpoints, newest first. Signing secrets are never included.
    * `GET /webhook-endpoints` · scope `webhooks:manage`
    */
   list(params?: WebhookEndpointListParams, options?: RequestOptions): PagePromise<WebhookEndpoint> {
@@ -24,7 +24,7 @@ export class WebhookEndpoints extends APIResource {
 
   /**
    * Create a webhook endpoint.
-   * Registers an https URL to receive events. The response carries the signing `secret` (`whsec_` + base64) — the only time it is returned, so store it. The URL must use https and must not resolve to a private, loopback or link-local address.
+   * Registers a URL to receive signed invoice events. The response carries the signing `secret` (`whsec_…`) — the only time it is returned, so store it.
    * `POST /webhook-endpoints` · scope `webhooks:manage` · idempotent (automatic key)
    */
   create(params: WebhookEndpointCreateParams, options?: RequestOptions): APIPromise<WebhookEndpointCreateResult> {
@@ -33,7 +33,7 @@ export class WebhookEndpoints extends APIResource {
 
   /**
    * Delete a webhook endpoint.
-   * Permanently deletes the endpoint; no further deliveries are made to it. Deleting it again is a `404`, not a silent success — that usually means you are working from a stale list.
+   * Permanently deletes an endpoint; no further deliveries are made to it. Deleting it again is a `404`.
    * `DELETE /webhook-endpoints/{id}` · scope `webhooks:manage`
    */
   del(id: string, options?: RequestOptions): APIPromise<void> {

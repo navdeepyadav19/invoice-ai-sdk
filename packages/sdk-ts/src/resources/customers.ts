@@ -15,7 +15,7 @@ export type CustomerUpdateParams = NonNullable<operations['updateCustomer']['req
 export class Customers extends APIResource {
   /**
    * List customers.
-   * Returns customers newest first, cursor-paginated. Archived customers are excluded unless `include_deleted=true`.
+   * Lists customers, newest first. Archived customers are left out unless `include_deleted=true`.
    * `GET /customers` · scope `clients:read`
    */
   list(params?: CustomerListParams, options?: RequestOptions): PagePromise<Customer> {
@@ -24,7 +24,7 @@ export class Customers extends APIResource {
 
   /**
    * Create a customer.
-   * Creates a customer you can bill. Only `name` is required. Creating does not deduplicate — two calls with the same name make two customers.
+   * Creates a customer to bill. Only `name` is required. Calls are not deduplicated: the same name twice makes two customers.
    * `POST /customers` · scope `clients:write` · idempotent (automatic key)
    */
   create(params: CustomerCreateParams, options?: RequestOptions): APIPromise<Customer> {
@@ -33,7 +33,7 @@ export class Customers extends APIResource {
 
   /**
    * Retrieve a customer.
-   * Returns one customer by `cus_…` id or UUID, including archived ones (`deleted: true`).
+   * Returns a customer by `cus_…` id or UUID, including archived ones (`deleted: true`).
    * `GET /customers/{id}` · scope `clients:read`
    */
   retrieve(id: string, options?: RequestOptions): APIPromise<Customer> {
@@ -42,7 +42,7 @@ export class Customers extends APIResource {
 
   /**
    * Update a customer.
-   * Updates the fields you send and leaves the rest unchanged. Existing invoices are not affected — each invoice keeps a snapshot of the customer as billed. Naturally idempotent, so no `Idempotency-Key` is needed.
+   * Updates the fields you send and leaves the rest unchanged. Issued invoices keep the customer details they were billed with. No `Idempotency-Key` needed — repeating the call is harmless.
    * `PATCH /customers/{id}` · scope `clients:write`
    */
   update(id: string, params: CustomerUpdateParams, options?: RequestOptions): APIPromise<Customer> {
@@ -51,7 +51,7 @@ export class Customers extends APIResource {
 
   /**
    * Archive a customer.
-   * Archives the customer (`deleted: true`) instead of deleting it: issued invoices reference customers and must keep naming who they were billed to. Archived customers drop out of `GET /customers` but stay readable by id. Archiving an archived customer succeeds and changes nothing.
+   * Archives a customer (`deleted: true`). Customers are never hard-deleted, because issued invoices must keep naming who they billed. Archived customers drop out of `GET /customers` but stay readable by id; archiving twice changes nothing.
    * `DELETE /customers/{id}` · scope `clients:write`
    */
   del(id: string, options?: RequestOptions): APIPromise<Customer> {

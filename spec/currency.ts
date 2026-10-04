@@ -1,6 +1,6 @@
 /**
  * How many decimals each currency has — the one table the wire format, the
- * UI and the webhook payload (supabase/migrations/0014_webhook_payload_v2.sql)
+ * UI and the webhook payload (db/migrations/0014_webhook_payload_v2.sql)
  * all agree on.
  *
  * A fixed table, not `Intl`. Intl's answer comes from whatever ICU build the

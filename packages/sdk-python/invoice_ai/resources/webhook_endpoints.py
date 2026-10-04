@@ -40,7 +40,7 @@ class WebhookEndpoints(SyncAPIResource):
         """
         List webhook endpoints.
 
-        Returns your webhook endpoints, newest first, cursor-paginated. Signing secrets are never included — only once, at creation.
+        Lists your webhook endpoints, newest first. Signing secrets are never included.
 
         `GET /webhook-endpoints` · scope `webhooks:manage`
 
@@ -75,12 +75,12 @@ class WebhookEndpoints(SyncAPIResource):
         """
         Create a webhook endpoint.
 
-        Registers an https URL to receive events. The response carries the signing `secret` (`whsec_` + base64) — the only time it is returned, so store it. The URL must use https and must not resolve to a private, loopback or link-local address.
+        Registers a URL to receive signed invoice events. The response carries the signing `secret` (`whsec_…`) — the only time it is returned, so store it.
 
         `POST /webhook-endpoints` · scope `webhooks:manage` · idempotent (automatic key)
 
         Args:
-          url: An `https://` URL that does not resolve to a private, loopback or link-local address.
+          url: An `https://` URL of up to 2048 characters, without a username or password, that resolves only to public addresses. Redirects are not followed.
           events: Event types to receive. Omit or send `[]` to receive every type, including ones added later.
         """
         return self._client._request(
@@ -110,7 +110,7 @@ class WebhookEndpoints(SyncAPIResource):
         """
         Delete a webhook endpoint.
 
-        Permanently deletes the endpoint; no further deliveries are made to it. Deleting it again is a `404`, not a silent success — that usually means you are working from a stale list.
+        Permanently deletes an endpoint; no further deliveries are made to it. Deleting it again is a `404`.
 
         `DELETE /webhook-endpoints/{id}` · scope `webhooks:manage`
         """
@@ -148,7 +148,7 @@ class AsyncWebhookEndpoints(AsyncAPIResource):
         """
         List webhook endpoints.
 
-        Returns your webhook endpoints, newest first, cursor-paginated. Signing secrets are never included — only once, at creation.
+        Lists your webhook endpoints, newest first. Signing secrets are never included.
 
         `GET /webhook-endpoints` · scope `webhooks:manage`
 
@@ -183,12 +183,12 @@ class AsyncWebhookEndpoints(AsyncAPIResource):
         """
         Create a webhook endpoint.
 
-        Registers an https URL to receive events. The response carries the signing `secret` (`whsec_` + base64) — the only time it is returned, so store it. The URL must use https and must not resolve to a private, loopback or link-local address.
+        Registers a URL to receive signed invoice events. The response carries the signing `secret` (`whsec_…`) — the only time it is returned, so store it.
 
         `POST /webhook-endpoints` · scope `webhooks:manage` · idempotent (automatic key)
 
         Args:
-          url: An `https://` URL that does not resolve to a private, loopback or link-local address.
+          url: An `https://` URL of up to 2048 characters, without a username or password, that resolves only to public addresses. Redirects are not followed.
           events: Event types to receive. Omit or send `[]` to receive every type, including ones added later.
         """
         return await self._client._request(
@@ -218,7 +218,7 @@ class AsyncWebhookEndpoints(AsyncAPIResource):
         """
         Delete a webhook endpoint.
 
-        Permanently deletes the endpoint; no further deliveries are made to it. Deleting it again is a `404`, not a silent success — that usually means you are working from a stale list.
+        Permanently deletes an endpoint; no further deliveries are made to it. Deleting it again is a `404`.
 
         `DELETE /webhook-endpoints/{id}` · scope `webhooks:manage`
         """

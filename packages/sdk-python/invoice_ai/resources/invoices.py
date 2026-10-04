@@ -47,7 +47,7 @@ class Invoices(SyncAPIResource):
         """
         List invoices.
 
-        Returns invoices newest first, cursor-paginated, without `lines`. `status=overdue` selects open invoices whose `due_date` is before today (UTC); `status=open` returns every open invoice, overdue ones included. An unknown `customer` is a `404`.
+        Lists invoices, newest first, without `lines`. `status=overdue` returns open invoices whose `due_date` is before today (UTC); `status=open` includes them. An unknown `customer` filter is a `404`.
 
         `GET /invoices` · scope `invoices:read`
 
@@ -92,7 +92,7 @@ class Invoices(SyncAPIResource):
         """
         Create a draft invoice.
 
-        Creates a `draft` for an existing customer. Each line is either a catalog `price` (description, amount and tax rate are borrowed from it) or an ad-hoc `description` + `unit_amount`. Totals are always computed server-side from the lines. The issue date is today; `currency` defaults to your business currency.
+        Creates a `draft` invoice for an existing customer. Each line is either a catalog `price` (its name, amount and tax rate fill in) or an ad-hoc `description` + `unit_amount`. Totals are computed server-side; `currency` defaults to your business currency.
 
         `POST /invoices` · scope `invoices:write` · idempotent (automatic key)
 
@@ -133,7 +133,7 @@ class Invoices(SyncAPIResource):
         """
         Retrieve an invoice.
 
-        Returns one invoice by `in_…` id or UUID, with its `lines`. `status` reflects `overdue` at the moment of reading.
+        Returns an invoice by `in_…` id or UUID, with its `lines`. `status` reads `overdue` when an open invoice is past its due date.
 
         `GET /invoices/{id}` · scope `invoices:read`
         """
@@ -171,7 +171,7 @@ class Invoices(SyncAPIResource):
         """
         Update a draft invoice.
 
-        Drafts only. A partial update: send only the fields to change — omitted ones (`customer` included) keep their stored value, and `items`, when sent, replaces every line (omit it to keep them). Totals are recomputed and line ids change. Once finalized an invoice is frozen — the customer may already have the PDF — and this returns `409`. Emits `invoice.updated`.
+        Updates a draft. Send only the fields to change; `items`, when sent, replaces every line (line ids change). Once finalized an invoice is frozen and this returns `409`. Emits `invoice.updated`.
 
         `PATCH /invoices/{id}` · scope `invoices:write`
 
@@ -212,7 +212,7 @@ class Invoices(SyncAPIResource):
         """
         Delete a draft invoice.
 
-        Permanently deletes a draft. A finalized invoice can never be deleted — its number belongs to a consecutive series, and a gap reads as a hidden sale. Void it instead.
+        Permanently deletes a draft. A finalized invoice cannot be deleted (`409`) — its number belongs to a gap-free series. Void it instead.
 
         `DELETE /invoices/{id}` · scope `invoices:write`
         """
@@ -240,7 +240,7 @@ class Invoices(SyncAPIResource):
         """
         Finalize an invoice.
 
-        Assigns the next permanent number in your series (e.g. `INV-0042`) and moves the draft to `open`. The draft must have at least one line. Finalizing an invoice that already has a number returns it unchanged with the same number — a retry can never burn a second one. Does not email the customer (see `/send`). Emits `invoice.finalized`.
+        Issues a draft: assigns the next number in your series (e.g. `INV-0042`) and moves it to `open`. The draft needs at least one line. Finalizing an invoice that already has a number returns it unchanged, so a retry never spends a second number. Does not email the customer — see `/send`. Emits `invoice.finalized`.
 
         `POST /invoices/{id}/finalize` · scope `invoices:finalize` · idempotent (automatic key)
         """
@@ -271,7 +271,7 @@ class Invoices(SyncAPIResource):
         """
         Send an invoice.
 
-        Emails the invoice PDF and a link to the public invoice page, via Resend, to `to` or else the customer email recorded on the invoice. A draft is finalized first (this scope covers that — `invoices:finalize` is not needed). Open and paid invoices can be re-sent; void ones cannot.
+        Emails the invoice PDF and a link to its public page to `to`, or else the customer email on the invoice. A draft is finalized first (no `invoices:finalize` scope needed). Open and paid invoices can be re-sent; void ones cannot.
 
         `POST /invoices/{id}/send` · scope `invoices:send` · idempotent (automatic key)
 
@@ -307,13 +307,13 @@ class Invoices(SyncAPIResource):
         """
         Mark an invoice paid.
 
-        Records that an `open` (or overdue) invoice was paid outside Invoice-AI — no money moves. Drafts, void and already-paid invoices return `409`. Sets `paid_at` and `amount_due: 0`. The response omits `lines`. Emits `invoice.paid`, with `reference` in the event meta.
+        Marks an `open` (or overdue) invoice paid outside Invoice-AI — no money moves. `paid_on` is an ISO 8601 date or timestamp (defaults to now); `reference` is up to 200 characters. Drafts, void and already-paid invoices return `409`. The response omits `lines`. Emits `invoice.paid`, with `reference` in its meta.
 
         `POST /invoices/{id}/pay` · scope `payments:write` · idempotent (automatic key)
 
         Args:
-          paid_on: When payment was received (ISO 8601 date or timestamp). Defaults to now.
-          reference: Your payment reference (cheque number, bank transfer id). Recorded on the `invoice.paid` event.
+          paid_on: When payment was received: an ISO 8601 date or timestamp. Defaults to now.
+          reference: Your payment reference (cheque number, bank transfer id), up to 200 characters. Recorded on the `invoice.paid` event.
         """
         return self._client._request(
             RequestSpec(
@@ -343,12 +343,12 @@ class Invoices(SyncAPIResource):
         """
         Void an invoice.
 
-        Voids an `open` (or overdue) invoice with a reason. The number stays on the record — an auditor seeing 0041 then 0043 needs to find 0042 voided, not missing. A paid invoice cannot be voided (it needs a credit note); a draft should be deleted instead. The response omits `lines`. Emits `invoice.voided`.
+        Voids an `open` (or overdue) invoice. `reason` is required, up to 500 characters. The number stays on record, so the series has no gaps. A paid invoice cannot be voided (it needs a credit note) and a draft should be deleted instead — both `409`. The response omits `lines`. Emits `invoice.voided`.
 
         `POST /invoices/{id}/void` · scope `invoices:finalize` · idempotent (automatic key)
 
         Args:
-          reason: Why the invoice is void. Required and non-blank; stored as `void_reason`.
+          reason: Why the invoice is void: required, non-blank, up to 500 characters. Stored as `void_reason`.
         """
         return self._client._request(
             RequestSpec(
@@ -378,7 +378,7 @@ class Invoices(SyncAPIResource):
         """
         Download an invoice PDF.
 
-        Returns the PDF bytes (not a link), rendered on demand from the current invoice, so it is always up to date. Works for drafts too (without a number). Served inline; pass `download=1` for `Content-Disposition: attachment`. Not cacheable (`Cache-Control: private, no-store`).
+        Returns the PDF bytes (not a link), rendered on demand from the current invoice — drafts too, without a number. Served inline; pass `download=1` for `Content-Disposition: attachment`. Not cacheable.
 
         `GET /invoices/{id}/pdf` · scope `invoices:read`
 
@@ -417,7 +417,7 @@ class Invoices(SyncAPIResource):
         """
         List invoice events.
 
-        Returns the history of one invoice, newest first, cursor-paginated: created, updated, finalized, emailed, viewed, downloaded, paid, voided. `invoice.viewed` and `invoice.downloaded` are recorded when the customer opens the public link — the way to tell they actually looked at it.
+        Lists one invoice’s history, newest first: created, updated, finalized, emailed, viewed, downloaded, paid, voided. `invoice.viewed` and `invoice.downloaded` mean the customer opened the public link; each is recorded at most once per invoice every 10 minutes.
 
         `GET /invoices/{id}/events` · scope `invoices:read`
 
@@ -465,7 +465,7 @@ class AsyncInvoices(AsyncAPIResource):
         """
         List invoices.
 
-        Returns invoices newest first, cursor-paginated, without `lines`. `status=overdue` selects open invoices whose `due_date` is before today (UTC); `status=open` returns every open invoice, overdue ones included. An unknown `customer` is a `404`.
+        Lists invoices, newest first, without `lines`. `status=overdue` returns open invoices whose `due_date` is before today (UTC); `status=open` includes them. An unknown `customer` filter is a `404`.
 
         `GET /invoices` · scope `invoices:read`
 
@@ -510,7 +510,7 @@ class AsyncInvoices(AsyncAPIResource):
         """
         Create a draft invoice.
 
-        Creates a `draft` for an existing customer. Each line is either a catalog `price` (description, amount and tax rate are borrowed from it) or an ad-hoc `description` + `unit_amount`. Totals are always computed server-side from the lines. The issue date is today; `currency` defaults to your business currency.
+        Creates a `draft` invoice for an existing customer. Each line is either a catalog `price` (its name, amount and tax rate fill in) or an ad-hoc `description` + `unit_amount`. Totals are computed server-side; `currency` defaults to your business currency.
 
         `POST /invoices` · scope `invoices:write` · idempotent (automatic key)
 
@@ -551,7 +551,7 @@ class AsyncInvoices(AsyncAPIResource):
         """
         Retrieve an invoice.
 
-        Returns one invoice by `in_…` id or UUID, with its `lines`. `status` reflects `overdue` at the moment of reading.
+        Returns an invoice by `in_…` id or UUID, with its `lines`. `status` reads `overdue` when an open invoice is past its due date.
 
         `GET /invoices/{id}` · scope `invoices:read`
         """
@@ -589,7 +589,7 @@ class AsyncInvoices(AsyncAPIResource):
         """
         Update a draft invoice.
 
-        Drafts only. A partial update: send only the fields to change — omitted ones (`customer` included) keep their stored value, and `items`, when sent, replaces every line (omit it to keep them). Totals are recomputed and line ids change. Once finalized an invoice is frozen — the customer may already have the PDF — and this returns `409`. Emits `invoice.updated`.
+        Updates a draft. Send only the fields to change; `items`, when sent, replaces every line (line ids change). Once finalized an invoice is frozen and this returns `409`. Emits `invoice.updated`.
 
         `PATCH /invoices/{id}` · scope `invoices:write`
 
@@ -630,7 +630,7 @@ class AsyncInvoices(AsyncAPIResource):
         """
         Delete a draft invoice.
 
-        Permanently deletes a draft. A finalized invoice can never be deleted — its number belongs to a consecutive series, and a gap reads as a hidden sale. Void it instead.
+        Permanently deletes a draft. A finalized invoice cannot be deleted (`409`) — its number belongs to a gap-free series. Void it instead.
 
         `DELETE /invoices/{id}` · scope `invoices:write`
         """
@@ -658,7 +658,7 @@ class AsyncInvoices(AsyncAPIResource):
         """
         Finalize an invoice.
 
-        Assigns the next permanent number in your series (e.g. `INV-0042`) and moves the draft to `open`. The draft must have at least one line. Finalizing an invoice that already has a number returns it unchanged with the same number — a retry can never burn a second one. Does not email the customer (see `/send`). Emits `invoice.finalized`.
+        Issues a draft: assigns the next number in your series (e.g. `INV-0042`) and moves it to `open`. The draft needs at least one line. Finalizing an invoice that already has a number returns it unchanged, so a retry never spends a second number. Does not email the customer — see `/send`. Emits `invoice.finalized`.
 
         `POST /invoices/{id}/finalize` · scope `invoices:finalize` · idempotent (automatic key)
         """
@@ -689,7 +689,7 @@ class AsyncInvoices(AsyncAPIResource):
         """
         Send an invoice.
 
-        Emails the invoice PDF and a link to the public invoice page, via Resend, to `to` or else the customer email recorded on the invoice. A draft is finalized first (this scope covers that — `invoices:finalize` is not needed). Open and paid invoices can be re-sent; void ones cannot.
+        Emails the invoice PDF and a link to its public page to `to`, or else the customer email on the invoice. A draft is finalized first (no `invoices:finalize` scope needed). Open and paid invoices can be re-sent; void ones cannot.
 
         `POST /invoices/{id}/send` · scope `invoices:send` · idempotent (automatic key)
 
@@ -725,13 +725,13 @@ class AsyncInvoices(AsyncAPIResource):
         """
         Mark an invoice paid.
 
-        Records that an `open` (or overdue) invoice was paid outside Invoice-AI — no money moves. Drafts, void and already-paid invoices return `409`. Sets `paid_at` and `amount_due: 0`. The response omits `lines`. Emits `invoice.paid`, with `reference` in the event meta.
+        Marks an `open` (or overdue) invoice paid outside Invoice-AI — no money moves. `paid_on` is an ISO 8601 date or timestamp (defaults to now); `reference` is up to 200 characters. Drafts, void and already-paid invoices return `409`. The response omits `lines`. Emits `invoice.paid`, with `reference` in its meta.
 
         `POST /invoices/{id}/pay` · scope `payments:write` · idempotent (automatic key)
 
         Args:
-          paid_on: When payment was received (ISO 8601 date or timestamp). Defaults to now.
-          reference: Your payment reference (cheque number, bank transfer id). Recorded on the `invoice.paid` event.
+          paid_on: When payment was received: an ISO 8601 date or timestamp. Defaults to now.
+          reference: Your payment reference (cheque number, bank transfer id), up to 200 characters. Recorded on the `invoice.paid` event.
         """
         return await self._client._request(
             RequestSpec(
@@ -761,12 +761,12 @@ class AsyncInvoices(AsyncAPIResource):
         """
         Void an invoice.
 
-        Voids an `open` (or overdue) invoice with a reason. The number stays on the record — an auditor seeing 0041 then 0043 needs to find 0042 voided, not missing. A paid invoice cannot be voided (it needs a credit note); a draft should be deleted instead. The response omits `lines`. Emits `invoice.voided`.
+        Voids an `open` (or overdue) invoice. `reason` is required, up to 500 characters. The number stays on record, so the series has no gaps. A paid invoice cannot be voided (it needs a credit note) and a draft should be deleted instead — both `409`. The response omits `lines`. Emits `invoice.voided`.
 
         `POST /invoices/{id}/void` · scope `invoices:finalize` · idempotent (automatic key)
 
         Args:
-          reason: Why the invoice is void. Required and non-blank; stored as `void_reason`.
+          reason: Why the invoice is void: required, non-blank, up to 500 characters. Stored as `void_reason`.
         """
         return await self._client._request(
             RequestSpec(
@@ -796,7 +796,7 @@ class AsyncInvoices(AsyncAPIResource):
         """
         Download an invoice PDF.
 
-        Returns the PDF bytes (not a link), rendered on demand from the current invoice, so it is always up to date. Works for drafts too (without a number). Served inline; pass `download=1` for `Content-Disposition: attachment`. Not cacheable (`Cache-Control: private, no-store`).
+        Returns the PDF bytes (not a link), rendered on demand from the current invoice — drafts too, without a number. Served inline; pass `download=1` for `Content-Disposition: attachment`. Not cacheable.
 
         `GET /invoices/{id}/pdf` · scope `invoices:read`
 
@@ -835,7 +835,7 @@ class AsyncInvoices(AsyncAPIResource):
         """
         List invoice events.
 
-        Returns the history of one invoice, newest first, cursor-paginated: created, updated, finalized, emailed, viewed, downloaded, paid, voided. `invoice.viewed` and `invoice.downloaded` are recorded when the customer opens the public link — the way to tell they actually looked at it.
+        Lists one invoice’s history, newest first: created, updated, finalized, emailed, viewed, downloaded, paid, voided. `invoice.viewed` and `invoice.downloaded` mean the customer opened the public link; each is recorded at most once per invoice every 10 minutes.
 
         `GET /invoices/{id}/events` · scope `invoices:read`
 

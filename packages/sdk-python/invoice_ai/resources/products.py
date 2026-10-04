@@ -40,7 +40,7 @@ class Products(SyncAPIResource):
         """
         List products.
 
-        Returns products newest first, cursor-paginated. Archived products are included unless you filter with `active`.
+        Lists products, newest first. Archived products are included unless you filter with `active`.
 
         `GET /products` · scope `products:read`
 
@@ -79,7 +79,7 @@ class Products(SyncAPIResource):
         """
         Create a product.
 
-        Creates a product. Add one or more prices to it with `POST /prices` before billing it.
+        Creates a product. Amounts live on prices: add one with `POST /prices` before billing it.
 
         `POST /products` · scope `products:write` · idempotent (automatic key)
 
@@ -116,7 +116,7 @@ class Products(SyncAPIResource):
         """
         Retrieve a product.
 
-        Returns one product by `prod_…` id or UUID, whether active or archived.
+        Returns a product by `prod_…` id or UUID, active or archived.
 
         `GET /products/{id}` · scope `products:read`
         """
@@ -150,7 +150,7 @@ class Products(SyncAPIResource):
         """
         Update a product.
 
-        Updates the fields you send and leaves the rest unchanged — omitted fields are never reset to defaults. Send `active: true` to restore an archived product. Finalized invoices keep the line descriptions they were issued with.
+        Updates the fields you send and leaves the rest unchanged. Send `active: true` to restore an archived product. Finalized invoices keep the line descriptions they were issued with.
 
         `PATCH /products/{id}` · scope `products:write`
 
@@ -187,7 +187,7 @@ class Products(SyncAPIResource):
         """
         Archive a product.
 
-        Sets `active: false`. The product is not deleted — its prices and the invoice lines that reference it stay intact. Archiving an archived product succeeds and changes nothing. Restore with `PATCH` and `active: true`.
+        Archives a product (`active: false`). Its prices and the invoice lines that use it stay intact; archiving twice changes nothing. Restore with `PATCH` and `active: true`.
 
         `DELETE /products/{id}` · scope `products:write`
         """
@@ -229,7 +229,7 @@ class AsyncProducts(AsyncAPIResource):
         """
         List products.
 
-        Returns products newest first, cursor-paginated. Archived products are included unless you filter with `active`.
+        Lists products, newest first. Archived products are included unless you filter with `active`.
 
         `GET /products` · scope `products:read`
 
@@ -268,7 +268,7 @@ class AsyncProducts(AsyncAPIResource):
         """
         Create a product.
 
-        Creates a product. Add one or more prices to it with `POST /prices` before billing it.
+        Creates a product. Amounts live on prices: add one with `POST /prices` before billing it.
 
         `POST /products` · scope `products:write` · idempotent (automatic key)
 
@@ -305,7 +305,7 @@ class AsyncProducts(AsyncAPIResource):
         """
         Retrieve a product.
 
-        Returns one product by `prod_…` id or UUID, whether active or archived.
+        Returns a product by `prod_…` id or UUID, active or archived.
 
         `GET /products/{id}` · scope `products:read`
         """
@@ -339,7 +339,7 @@ class AsyncProducts(AsyncAPIResource):
         """
         Update a product.
 
-        Updates the fields you send and leaves the rest unchanged — omitted fields are never reset to defaults. Send `active: true` to restore an archived product. Finalized invoices keep the line descriptions they were issued with.
+        Updates the fields you send and leaves the rest unchanged. Send `active: true` to restore an archived product. Finalized invoices keep the line descriptions they were issued with.
 
         `PATCH /products/{id}` · scope `products:write`
 
@@ -376,7 +376,7 @@ class AsyncProducts(AsyncAPIResource):
         """
         Archive a product.
 
-        Sets `active: false`. The product is not deleted — its prices and the invoice lines that reference it stay intact. Archiving an archived product succeeds and changes nothing. Restore with `PATCH` and `active: true`.
+        Archives a product (`active: false`). Its prices and the invoice lines that use it stay intact; archiving twice changes nothing. Restore with `PATCH` and `active: true`.
 
         `DELETE /products/{id}` · scope `products:write`
         """
