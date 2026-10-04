@@ -472,7 +472,7 @@ class InvoiceEvent(BaseModel):
         "invoice.voided",
     ]
     """
-    What happened. `invoice.viewed` and `invoice.downloaded` are recorded when the customer opens the public share link.
+    What happened. `invoice.viewed` and `invoice.downloaded` are recorded when the customer opens the public share link, at most once per type per invoice every 10 minutes.
     """
     meta: Optional[Dict[str, Any]] = None
     """
@@ -631,11 +631,11 @@ class InvoiceLines(BaseModel):
 class InvoicePay(BaseModel):
     paid_on: Optional[str] = None
     """
-    When payment was received (ISO 8601 date or timestamp). Defaults to now.
+    When payment was received: an ISO 8601 date or timestamp. Defaults to now.
     """
     reference: Optional[str] = None
     """
-    Your payment reference (cheque number, bank transfer id). Recorded on the `invoice.paid` event.
+    Your payment reference (cheque number, bank transfer id), up to 200 characters. Recorded on the `invoice.paid` event.
     """
 
 
@@ -699,7 +699,7 @@ class InvoiceUpdate(BaseModel):
 class InvoiceVoid(BaseModel):
     reason: str
     """
-    Why the invoice is void. Required and non-blank; stored as `void_reason`.
+    Why the invoice is void: required, non-blank, up to 500 characters. Stored as `void_reason`.
     """
 
 
@@ -1031,7 +1031,7 @@ class WebhookEndpoint(BaseModel):
     """
     active: bool
     """
-    `false` once deliveries are disabled, which happens after 20 consecutive failures.
+    `false` once deliveries are disabled: after 20 deliveries in a row used up every retry. A successful delivery resets the count.
     """
     disabled_at: Optional[str] = None
     """
@@ -1039,7 +1039,7 @@ class WebhookEndpoint(BaseModel):
     """
     failure_count: int
     """
-    Consecutive failed deliveries.
+    Deliveries in a row that used up every retry. Resets to 0 on any successful delivery.
     """
     created_at: str
     """
@@ -1050,7 +1050,7 @@ class WebhookEndpoint(BaseModel):
 class WebhookEndpointCreate(BaseModel):
     url: str
     """
-    An `https://` URL that does not resolve to a private, loopback or link-local address.
+    An `https://` URL of up to 2048 characters, without a username or password, that resolves only to public addresses. Redirects are not followed.
     """
     events: Optional[
         List[
@@ -1103,7 +1103,7 @@ class WebhookEndpointCreateResult(BaseModel):
     """
     active: bool
     """
-    `false` once deliveries are disabled, which happens after 20 consecutive failures.
+    `false` once deliveries are disabled: after 20 deliveries in a row used up every retry. A successful delivery resets the count.
     """
     disabled_at: Optional[str] = None
     """
@@ -1111,7 +1111,7 @@ class WebhookEndpointCreateResult(BaseModel):
     """
     failure_count: int
     """
-    Consecutive failed deliveries.
+    Deliveries in a row that used up every retry. Resets to 0 on any successful delivery.
     """
     created_at: str
     """

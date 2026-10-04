@@ -45,7 +45,7 @@ class Prices(SyncAPIResource):
         """
         List prices.
 
-        Returns prices newest first, cursor-paginated, optionally filtered by product, active flag, currency or type. An unknown `product` is a `404`, not an empty page.
+        Lists prices, newest first, optionally filtered by `product`, `active`, `currency` or `type`. An unknown `product` is a `404`, not an empty page.
 
         `GET /prices` · scope `products:read`
 
@@ -90,7 +90,7 @@ class Prices(SyncAPIResource):
         """
         Create a price.
 
-        Adds a price to a product. `unit_amount` is integer minor units. A `recurring` price needs `recurring.interval`; it is stored for reporting — nothing auto-bills yet.
+        Adds a price to a product. `unit_amount` is in integer minor units. A `recurring` price needs `recurring.interval`; it is stored for reporting — nothing auto-bills yet.
 
         `POST /prices` · scope `products:write` · idempotent (automatic key)
 
@@ -131,7 +131,7 @@ class Prices(SyncAPIResource):
         """
         Retrieve a price.
 
-        Returns one price by `price_…` id or UUID, whether active or archived.
+        Returns a price by `price_…` id or UUID, active or archived.
 
         `GET /prices/{id}` · scope `products:read`
         """
@@ -169,7 +169,7 @@ class Prices(SyncAPIResource):
         """
         Update a price.
 
-        Updates the fields you send and leaves the rest unchanged. The parent product cannot change — sending `product` is a `422`; create a new price instead. Lines on finalized invoices keep the amount they were billed at; a draft with a line from this price picks up the change the next time it is saved.
+        Updates the fields you send and leaves the rest unchanged. A price cannot move to another product (`422`) — create a new price instead. Finalized invoices keep the amount they were billed at; a draft picks up the change the next time it is saved.
 
         `PATCH /prices/{id}` · scope `products:write`
 
@@ -210,7 +210,7 @@ class Prices(SyncAPIResource):
         """
         Archive a price.
 
-        Sets `active: false`. The price is not deleted, because invoice lines may reference it. Archiving an archived price succeeds and changes nothing. Restore with `PATCH` and `active: true`.
+        Archives a price (`active: false`). It is kept because invoice lines may reference it; archiving twice changes nothing. Restore with `PATCH` and `active: true`.
 
         `DELETE /prices/{id}` · scope `products:write`
         """
@@ -254,7 +254,7 @@ class AsyncPrices(AsyncAPIResource):
         """
         List prices.
 
-        Returns prices newest first, cursor-paginated, optionally filtered by product, active flag, currency or type. An unknown `product` is a `404`, not an empty page.
+        Lists prices, newest first, optionally filtered by `product`, `active`, `currency` or `type`. An unknown `product` is a `404`, not an empty page.
 
         `GET /prices` · scope `products:read`
 
@@ -299,7 +299,7 @@ class AsyncPrices(AsyncAPIResource):
         """
         Create a price.
 
-        Adds a price to a product. `unit_amount` is integer minor units. A `recurring` price needs `recurring.interval`; it is stored for reporting — nothing auto-bills yet.
+        Adds a price to a product. `unit_amount` is in integer minor units. A `recurring` price needs `recurring.interval`; it is stored for reporting — nothing auto-bills yet.
 
         `POST /prices` · scope `products:write` · idempotent (automatic key)
 
@@ -340,7 +340,7 @@ class AsyncPrices(AsyncAPIResource):
         """
         Retrieve a price.
 
-        Returns one price by `price_…` id or UUID, whether active or archived.
+        Returns a price by `price_…` id or UUID, active or archived.
 
         `GET /prices/{id}` · scope `products:read`
         """
@@ -378,7 +378,7 @@ class AsyncPrices(AsyncAPIResource):
         """
         Update a price.
 
-        Updates the fields you send and leaves the rest unchanged. The parent product cannot change — sending `product` is a `422`; create a new price instead. Lines on finalized invoices keep the amount they were billed at; a draft with a line from this price picks up the change the next time it is saved.
+        Updates the fields you send and leaves the rest unchanged. A price cannot move to another product (`422`) — create a new price instead. Finalized invoices keep the amount they were billed at; a draft picks up the change the next time it is saved.
 
         `PATCH /prices/{id}` · scope `products:write`
 
@@ -419,7 +419,7 @@ class AsyncPrices(AsyncAPIResource):
         """
         Archive a price.
 
-        Sets `active: false`. The price is not deleted, because invoice lines may reference it. Archiving an archived price succeeds and changes nothing. Restore with `PATCH` and `active: true`.
+        Archives a price (`active: false`). It is kept because invoice lines may reference it; archiving twice changes nothing. Restore with `PATCH` and `active: true`.
 
         `DELETE /prices/{id}` · scope `products:write`
         """

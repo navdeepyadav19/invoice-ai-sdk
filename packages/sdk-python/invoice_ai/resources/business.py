@@ -34,7 +34,7 @@ class BusinessResource(SyncAPIResource):
         """
         Retrieve the business profile.
 
-        Returns the business profile invoices are issued from: legal name, address, tax id, default currency, bank details and invoice prefix. Read-only — the profile is edited in the app.
+        Returns your business profile — the issuer printed on every invoice: legal name, address, tax id, default currency, bank details and invoice prefix. Read-only over the API; edit it in Settings.
 
         `GET /business` · scope `business:read`
         """
@@ -72,7 +72,7 @@ class AsyncBusinessResource(AsyncAPIResource):
         """
         Retrieve the business profile.
 
-        Returns the business profile invoices are issued from: legal name, address, tax id, default currency, bank details and invoice prefix. Read-only — the profile is edited in the app.
+        Returns your business profile — the issuer printed on every invoice: legal name, address, tax id, default currency, bank details and invoice prefix. Read-only over the API; edit it in Settings.
 
         `GET /business` · scope `business:read`
         """

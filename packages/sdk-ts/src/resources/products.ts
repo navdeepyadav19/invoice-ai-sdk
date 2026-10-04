@@ -15,7 +15,7 @@ export type ProductUpdateParams = NonNullable<operations['updateProduct']['reque
 export class Products extends APIResource {
   /**
    * List products.
-   * Returns products newest first, cursor-paginated. Archived products are included unless you filter with `active`.
+   * Lists products, newest first. Archived products are included unless you filter with `active`.
    * `GET /products` · scope `products:read`
    */
   list(params?: ProductListParams, options?: RequestOptions): PagePromise<Product> {
@@ -24,7 +24,7 @@ export class Products extends APIResource {
 
   /**
    * Create a product.
-   * Creates a product. Add one or more prices to it with `POST /prices` before billing it.
+   * Creates a product. Amounts live on prices: add one with `POST /prices` before billing it.
    * `POST /products` · scope `products:write` · idempotent (automatic key)
    */
   create(params: ProductCreateParams, options?: RequestOptions): APIPromise<Product> {
@@ -33,7 +33,7 @@ export class Products extends APIResource {
 
   /**
    * Retrieve a product.
-   * Returns one product by `prod_…` id or UUID, whether active or archived.
+   * Returns a product by `prod_…` id or UUID, active or archived.
    * `GET /products/{id}` · scope `products:read`
    */
   retrieve(id: string, options?: RequestOptions): APIPromise<Product> {
@@ -42,7 +42,7 @@ export class Products extends APIResource {
 
   /**
    * Update a product.
-   * Updates the fields you send and leaves the rest unchanged — omitted fields are never reset to defaults. Send `active: true` to restore an archived product. Finalized invoices keep the line descriptions they were issued with.
+   * Updates the fields you send and leaves the rest unchanged. Send `active: true` to restore an archived product. Finalized invoices keep the line descriptions they were issued with.
    * `PATCH /products/{id}` · scope `products:write`
    */
   update(id: string, params: ProductUpdateParams, options?: RequestOptions): APIPromise<Product> {
@@ -51,7 +51,7 @@ export class Products extends APIResource {
 
   /**
    * Archive a product.
-   * Sets `active: false`. The product is not deleted — its prices and the invoice lines that reference it stay intact. Archiving an archived product succeeds and changes nothing. Restore with `PATCH` and `active: true`.
+   * Archives a product (`active: false`). Its prices and the invoice lines that use it stay intact; archiving twice changes nothing. Restore with `PATCH` and `active: true`.
    * `DELETE /products/{id}` · scope `products:write`
    */
   archive(id: string, options?: RequestOptions): APIPromise<Product> {
